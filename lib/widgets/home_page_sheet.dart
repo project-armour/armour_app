@@ -1,11 +1,11 @@
+import 'dart:ui';
+
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:armour_app/helpers/url_launch_helper.dart';
 
 class HomePageSheet extends StatefulWidget {
   const HomePageSheet({super.key, this.mapController});
@@ -17,7 +17,7 @@ class HomePageSheet extends StatefulWidget {
 }
 
 class _HomePageSheetState extends State<HomePageSheet> {
-  final sheetHeights = [480.0, 240.0];
+  final sheetHeights = [450.0, 240.0];
   late final SheetController controller;
 
   @override
@@ -44,9 +44,14 @@ class _HomePageSheetState extends State<HomePageSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final sheetBorder = BorderSide(
+      color: Theme.of(
+        context,
+      ).colorScheme.outlineVariant.withValues(alpha: 0.75),
+    );
     return SheetViewport(
       child: Sheet(
-        initialOffset: SheetOffset.absolute(480),
+        initialOffset: RelativeSheetOffset(sheetHeights.last/MediaQuery.of(context).size.height),
         controller: controller,
         snapGrid: SheetSnapGrid(
           snaps:
@@ -59,20 +64,33 @@ class _HomePageSheetState extends State<HomePageSheet> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 AboveSheetActions(focusFunction: _focusOnUserLocation),
-                Container(
-                  height: sheetHeights.first + 200,
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
                   ),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      
-                    ],
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      height: sheetHeights.first + 150,
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerLow
+                            .withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                        border: Border(
+                          top: sheetBorder,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [],
+                      ),
+                    ),
                   ),
                 ),
               ],
