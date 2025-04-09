@@ -9,12 +9,27 @@ class HomePageSheet extends StatefulWidget {
 }
 
 class _HomePageSheetState extends State<HomePageSheet> {
+  final sheetHeights = [480.0, 240.0];
+  late final SheetController controller;
+
+  @override
+  void initState() {
+    controller = SheetController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    const sheetHeights = [480.0, 240.0];
     return SheetViewport(
       child: Sheet(
-        initialOffset: SheetOffset.absolute(sheetHeights.first),
+        initialOffset: SheetOffset.absolute(480),
+        controller: controller,
         snapGrid: SheetSnapGrid(
           snaps:
               sheetHeights.map((value) => SheetOffset.absolute(value)).toList(),
@@ -43,12 +58,7 @@ class _HomePageSheetState extends State<HomePageSheet> {
                 ),
                 margin: const EdgeInsets.only(bottom: 16, top: 12),
               ),
-              const Text(
-                'Persistent Bottom Sheet',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text('Your content goes here'),
+              
             ],
           ),
         ),

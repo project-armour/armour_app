@@ -5,7 +5,6 @@ import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:smooth_sheets/smooth_sheets.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -55,7 +54,22 @@ class _HomePageState extends State<HomePage>
               IconButton(onPressed: () {}, icon: Icon(LucideIcons.settings)),
             ],
           ),
-          body: SafeArea(top: false, child: MapView()),
+          body: SafeArea(
+            top: false,
+            child: Stack(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  alignment: Alignment.topRight,
+                  child: Stack(children: [
+                    
+                  ]
+                ),
+                ),
+                MapView(),
+              ],
+            ),
+          ),
         ),
         HomePageSheet(),
       ],
