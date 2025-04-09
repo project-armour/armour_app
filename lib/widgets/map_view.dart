@@ -1,22 +1,25 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapView extends StatefulWidget {
-  const MapView({super.key});
+  const MapView({super.key, this.mapController});
+  
+  final MapController? mapController;
 
   @override
   State<MapView> createState() => _MapViewState();
 }
 
 class _MapViewState extends State<MapView> {
+  late final MapController _mapController;
+  
   @override
   void initState() {
     super.initState();
+    _mapController = widget.mapController ?? MapController();
   }
-
+  
   @override
   Widget build(BuildContext context) {
     const String mapApiKey = String.fromEnvironment("STADIA_MAPS_KEY");
@@ -24,6 +27,7 @@ class _MapViewState extends State<MapView> {
       return const Center(child: Text("No map API key found"));
     } else {
       return FlutterMap(
+        mapController: _mapController,
         options: MapOptions(
           initialCenter: const LatLng(12.9716, 77.5946),
           cameraConstraint: CameraConstraint.contain(
