@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
@@ -9,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:armour_app/widgets/user_marker.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,13 +22,46 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   final MapController _mapController = MapController();
+  late List<UserMarker> markers;
+
+  final LocationSettings locationSettings = LocationSettings(
+    accuracy: LocationAccuracy.best,
+  );
+
+  @override
+  void initState() {
+    markers = [
+      UserMarker(
+        context: context,
+        coordinates: LatLng(12.9716, 77.5946),
+        name: "You",
+        userId: "123",
+        isUser: true,
+      ),
+      UserMarker(
+        context: context,
+        coordinates: LatLng(12.9816, 77.6006),
+        name: "Not sharing",
+        userId: "456",
+      ),
+      UserMarker(
+        context: context,
+        coordinates: LatLng(12.9656, 77.5846),
+        name: "Sharing Location",
+        userId: "789",
+        isOnline: true,
+      ),
+    ];
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Marker> markers = [
-      UserMarker.marker(context, LatLng(12.9716, 77.5946), "You", isUser: true),
-    ];
-
     return Stack(
       children: [
         Scaffold(
@@ -113,9 +148,8 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
-        HomePageSheet(mapController: _mapController, markers: markers,),
+        HomePageSheet(mapController: _mapController, markers: markers),
       ],
     );
   }
-
 }

@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -9,10 +8,12 @@ class AboveSheetActions extends StatelessWidget {
     super.key,
     required this.focusFunction,
     required this.resetRotationFunction,
+    required this.googleMapsFunction,
   });
 
   final VoidCallback focusFunction;
   final VoidCallback resetRotationFunction;
+  final VoidCallback googleMapsFunction;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +34,7 @@ class AboveSheetActions extends StatelessWidget {
             ),
           ),
           FloatingActionButton.small(
-            onPressed: () {
-              UrlLaunchHelper.checkAndLaunchUrl('geo:${12.9716},${77.5946}');
-            },
+            onPressed: googleMapsFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Center(
               child: Image.asset(
