@@ -3,9 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapView extends StatefulWidget {
-  const MapView({super.key, this.mapController});
-  
+  const MapView({super.key, this.mapController, this.markers = const []});
+
   final MapController? mapController;
+  final List<Marker> markers;
 
   @override
   State<MapView> createState() => _MapViewState();
@@ -43,6 +44,8 @@ class _MapViewState extends State<MapView> {
 
             minZoom: 1,
           ),
+
+          MarkerLayer(markers: widget.markers, rotate: true, alignment: Alignment.topCenter,),
         ],
       );
     }

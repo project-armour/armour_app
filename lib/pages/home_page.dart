@@ -5,8 +5,10 @@ import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:armour_app/widgets/user_marker.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,9 +20,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   final MapController _mapController = MapController();
-  
+
   @override
   Widget build(BuildContext context) {
+    List<Marker> markers = [
+      UserMarker.marker(context, LatLng(12.9716, 77.5946), "You", isUser: true),
+    ];
+
     return Stack(
       children: [
         Scaffold(
@@ -60,7 +66,7 @@ class _HomePageState extends State<HomePage>
           ),
           body: Stack(
             children: [
-              MapView(mapController: _mapController),
+              MapView(mapController: _mapController, markers: markers),
               SafeArea(
                 child: Container(
                   padding: EdgeInsets.all(16),
@@ -74,7 +80,9 @@ class _HomePageState extends State<HomePage>
                         },
                         label: Text("Ambulance"),
                         icon: Icon(LucideIcons.heartPulse),
-                        style: FilledButton.styleFrom(backgroundColor: Colors.greenAccent),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.greenAccent,
+                        ),
                       ),
 
                       FilledButton.icon(
@@ -83,7 +91,9 @@ class _HomePageState extends State<HomePage>
                         },
                         label: Text("Police"),
                         icon: Icon(LucideIcons.siren),
-                        style: FilledButton.styleFrom(backgroundColor: Colors.lightBlueAccent),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.lightBlueAccent,
+                        ),
                       ),
 
                       FilledButton.icon(
@@ -92,7 +102,9 @@ class _HomePageState extends State<HomePage>
                         },
                         label: Text("Fire"),
                         icon: Icon(LucideIcons.flame),
-                        style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
                       ),
                     ],
                   ),
@@ -101,8 +113,9 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
-        HomePageSheet(mapController: _mapController),
+        HomePageSheet(mapController: _mapController, markers: markers,),
       ],
     );
   }
+
 }
