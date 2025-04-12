@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:armour_app/helpers/animated_map.dart';
+import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:armour_app/widgets/user_marker.dart';
-import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,24 +21,80 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   late List<UserMarker> markers;
+  late StreamSubscription<Position> _positionStream;
 
-  final LocationSettings locationSettings = LocationSettings(
-    accuracy: LocationAccuracy.best,
-  );
+  bool _isListening = false;
+  bool _isTrackingUser = false;
+  LatLng currentLocation = LatLng(12.9716, 77.5946);
 
   @override
   void initState() {
+    super.initState();
+    _mapController.mapEventStream.listen((event) {
+      if (event is MapEventMove &&
+          event.source != MapEventSource.mapController) {
+        setState(() {
+          _isTrackingUser = false;
+        });
+      }
+    });
+  }
+
+  void startListening() async {
+    if (await LocationHelper.checkPermissions()) {
+      setState(() {
+        _isTrackingUser = true;
+      });
+      _positionStream = LocationHelper.startListening(
+        (coords) {
+          setState(() {
+            _isListening = true;
+            currentLocation = coords;
+            if (_isTrackingUser) {
+              AnimateMap.move(this, _mapController, coords, destZoom: 16);
+            }
+          });
+        },
+        () => {
+          setState(() {
+            _isListening = false;
+          }),
+        },
+      );
+    }
+  }
+
+  void trackUser() {
+    if (!_isListening) {
+      startListening();
+    } else {
+      setState(() {
+        _isTrackingUser = true;
+      });
+    }
+
+    LatLng userLocation = markers.where((el) => el.isUser).first.coordinates;
+    AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
+  }
+
+  @override
+  void dispose() {
+    _positionStream.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     markers = [
       UserMarker(
         context: context,
-        coordinates: LatLng(12.9716, 77.5946),
+        coordinates: currentLocation,
         name: "You",
         userId: "123",
-        isUser: true,
+        isUser: _isListening,
       ),
       UserMarker(
         context: context,
@@ -52,16 +110,7 @@ class _HomePageState extends State<HomePage>
         isOnline: true,
       ),
     ];
-    super.initState();
-  }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Stack(
       children: [
         Scaffold(
@@ -148,7 +197,12 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
-        HomePageSheet(mapController: _mapController, markers: markers),
+        HomePageSheet(
+          mapController: _mapController,
+          markers: markers,
+          isTracking: _isTrackingUser,
+          trackUser: trackUser,
+        ),
       ],
     );
   }

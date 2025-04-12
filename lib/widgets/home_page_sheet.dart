@@ -11,10 +11,18 @@ import 'package:latlong2/latlong.dart';
 import 'package:armour_app/helpers/animated_map.dart';
 
 class HomePageSheet extends StatefulWidget {
-  const HomePageSheet({super.key, this.mapController, this.markers = const []});
+  const HomePageSheet({
+    super.key,
+    this.mapController,
+    this.markers = const [],
+    this.isTracking = false,
+    required this.trackUser,
+  });
 
   final MapController? mapController;
   final List<UserMarker> markers;
+  final bool isTracking;
+  final VoidCallback trackUser;
 
   @override
   State<HomePageSheet> createState() => _HomePageSheetState();
@@ -24,6 +32,7 @@ class _HomePageSheetState extends State<HomePageSheet>
     with TickerProviderStateMixin {
   final sheetHeights = [450.0, 240.0];
   late final SheetController controller;
+  late final ValueNotifier<UserMarker> userLocation;
 
   @override
   void initState() {
@@ -34,23 +43,13 @@ class _HomePageSheetState extends State<HomePageSheet>
   @override
   void dispose() {
     controller.dispose();
+    userLocation.dispose();
     super.dispose();
   }
 
   void _resetMapRotation() {
     if (widget.mapController != null) {
       AnimateMap.rotate(this, widget.mapController!, 0);
-    }
-  }
-
-  void _focusOnUserLocation() {
-    // Example coordinates - you would replace this with actual user location
-    // For example, from a location service or GPS
-    final LatLng userLocation =
-        widget.markers.where((el) => el.isUser).first.coordinates;
-
-    if (widget.mapController != null) {
-      AnimateMap.move(this, widget.mapController!, userLocation);
     }
   }
 
@@ -63,7 +62,7 @@ class _HomePageSheetState extends State<HomePageSheet>
     );
     return SheetViewport(
       child: Sheet(
-        initialOffset: SheetOffset.proportionalToViewport(0.5),
+        initialOffset: SheetOffset.proportionalToViewport(0.25),
         controller: controller,
         snapGrid: SheetSnapGrid(
           snaps:
@@ -76,15 +75,19 @@ class _HomePageSheetState extends State<HomePageSheet>
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 AboveSheetActions(
-                  focusFunction: _focusOnUserLocation,
+                  focusFunction: widget.trackUser,
                   resetRotationFunction: _resetMapRotation,
-                  googleMapsFunction:
-                      () {
-                        final userLocation = widget.markers.where((el) => el.isUser).first.coordinates;
-                        UrlLaunchHelper.checkAndLaunchUrl(
-                          'geo:${userLocation.latitude},${userLocation.longitude}',
-                        );
-                      },
+                  isTracking: widget.isTracking,
+                  googleMapsFunction: () {
+                    final userLocation =
+                        widget.markers
+                            .where((el) => el.isUser)
+                            .first
+                            .coordinates;
+                    UrlLaunchHelper.checkAndLaunchUrl(
+                      'geo:${userLocation.latitude},${userLocation.longitude}',
+                    );
+                  },
                 ),
                 ClipRRect(
                   borderRadius: BorderRadius.only(

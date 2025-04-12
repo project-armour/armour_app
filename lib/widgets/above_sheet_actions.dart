@@ -9,11 +9,13 @@ class AboveSheetActions extends StatelessWidget {
     required this.focusFunction,
     required this.resetRotationFunction,
     required this.googleMapsFunction,
+    required this.isTracking,
   });
 
   final VoidCallback focusFunction;
   final VoidCallback resetRotationFunction;
   final VoidCallback googleMapsFunction;
+  final bool isTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +54,9 @@ class AboveSheetActions extends StatelessWidget {
           FloatingActionButton.small(
             onPressed: focusFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
-            child: Icon(LucideIcons.locate),
+            child: Icon(
+              isTracking ? LucideIcons.locateFixed : LucideIcons.locate,
+            ),
           ),
         ],
       ),
