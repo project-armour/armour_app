@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -8,19 +9,82 @@ class LocationHelper {
     accuracy: LocationAccuracy.best,
     distanceFilter: 0,
   );
-  static Future<bool> checkPermissions() async {
+  static Future<bool> checkPermissions(BuildContext context) async {
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    requestPermission() async {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         return false;
+      } else {
+        return true;
       }
     }
-    if (permission == LocationPermission.deniedForever) {
-      Geolocator.openAppSettings();
+
+    if (context.mounted) {
+      if (permission == LocationPermission.denied) {
+        showDialog(
+          context: context,
+          builder:
+              (BuildContext context) => Dialog(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 12,
+                    children: [
+                      Text(
+                        "Access device location",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          children: [
+                            TextSpan(
+                              text:
+                                  "The app requires access to the device's location to work correctly. Please allow ",
+                            ),
+                            TextSpan(
+                              text: "Precise",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text: " location access in the next screen.",
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        spacing: 12,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancel"),
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              requestPermission();
+                              Navigator.pop(context);
+                            },
+                            child: Text("Continue"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        );
+      }
+      if (permission == LocationPermission.deniedForever) {
+        Geolocator.openAppSettings();
+        return false;
+      }
+      return true;
+    } else {
       return false;
     }
-    return true;
   }
 
   static StreamSubscription<Position> startListening(

@@ -9,7 +9,7 @@ class UserMarker {
     required this.coordinates,
     required this.name,
     required this.userId,
-    this.isOnline = false,
+    this.isSharing = false,
     this.isUser = false,
     this.imageUrl,
   });
@@ -17,7 +17,7 @@ class UserMarker {
   final BuildContext context;
   final String userId;
   bool isUser;
-  bool isOnline;
+  bool isSharing;
   LatLng coordinates;
   String name;
   String? imageUrl = 'assets/images/default_profile.png';
@@ -102,7 +102,7 @@ class UserMarker {
                     name,
                     style: TextStyle(
                       color:
-                          isOnline
+                          isSharing
                               ? (isUser
                                   ? Colors.greenAccent
                                   : Colors.lightBlueAccent)
@@ -113,7 +113,7 @@ class UserMarker {
                   ),
                 ],
               ),
-              MarkerStatus(isOnline: isOnline),
+              MarkerStatus(isOnline: isSharing),
             ],
           ),
           Container(
@@ -125,7 +125,7 @@ class UserMarker {
                 color:
                     isUser
                         ? Colors.greenAccent
-                        : isOnline
+                        : isSharing
                         ? Colors.lightBlueAccent
                         : Colors.grey,
                 width: 2,
@@ -148,7 +148,7 @@ class UserMarker {
             color:
                 isUser
                     ? Colors.greenAccent
-                    : isOnline
+                    : isSharing
                     ? Colors.lightBlueAccent
                     : Colors.grey,
           ),

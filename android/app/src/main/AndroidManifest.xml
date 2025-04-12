@@ -20,9 +20,9 @@ https://developer.android.com/about/versions/12/features/bluetooth-permissions -
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
 
     <application
-        android:label="armour_app"
+        android:label="ARMOUR"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void startListening() async {
-    if (await LocationHelper.checkPermissions()) {
+    if (await LocationHelper.checkPermissions(context)) {
       setState(() {
         _isTrackingUser = true;
       });
@@ -64,10 +64,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }),
         },
       );
+    } else {
+      setState(() {
+        _isListening = false;
+        _isTrackingUser = false;
+      });
     }
   }
 
   void trackUser() {
+    LatLng userLocation = markers.where((el) => el.isUser).first.coordinates;
+    AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
     if (!_isListening) {
       startListening();
     } else {
@@ -75,9 +82,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _isTrackingUser = true;
       });
     }
-
-    LatLng userLocation = markers.where((el) => el.isUser).first.coordinates;
-    AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
   }
 
   @override
@@ -94,7 +98,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         coordinates: currentLocation,
         name: "You",
         userId: "123",
-        isUser: _isListening,
+        isUser: true,
       ),
       UserMarker(
         context: context,
@@ -107,7 +111,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         coordinates: LatLng(12.9656, 77.5846),
         name: "Sharing Location",
         userId: "789",
-        isOnline: true,
+        isSharing: true,
       ),
     ];
 
