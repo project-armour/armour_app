@@ -41,7 +41,7 @@ class _HomePageSheetState extends State<HomePageSheet>
     super.initState();
     sheetController = SheetController();
 
-    // Create an AnimationController with the same range as your sheet movement
+    // Create an AnimationController with the same range as sheet movement
     animationController = AnimationController(
       vsync: this,
       duration: Duration.zero,
@@ -91,7 +91,7 @@ class _HomePageSheetState extends State<HomePageSheet>
 
     return SheetViewport(
       child: Sheet(
-        initialOffset: SheetOffset.absolute(200),
+        initialOffset: SheetOffset(0.3125),
         controller: sheetController,
         snapGrid: SheetSnapGrid(
           snaps:
@@ -101,6 +101,7 @@ class _HomePageSheetState extends State<HomePageSheet>
           alignment: Alignment.topCenter,
           children: [
             Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 AboveSheetActions(
@@ -126,7 +127,7 @@ class _HomePageSheetState extends State<HomePageSheet>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
-                      height: sheetHeights.first + 150,
+                      height: sheetHeights.first + 130,
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 220),
                       decoration: BoxDecoration(
