@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:armour_app/widgets/user_marker.dart';
 
@@ -41,6 +41,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       }
     });
+
+    // Automatically start listening for location updates when the page loads
+    startListening();
   }
 
   void startListening() async {
