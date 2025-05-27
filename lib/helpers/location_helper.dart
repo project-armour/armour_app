@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,7 +13,6 @@ class LocationHelper {
     foregroundNotificationConfig: ForegroundNotificationConfig(
       notificationText: "Location in use",
       notificationTitle: "Armour",
-      enableWakeLock: true,
     ),
   );
   static Future<bool> checkPermissions(BuildContext context) async {
@@ -44,10 +44,10 @@ class LocationHelper {
     return true;
   }
 
-  static StreamSubscription<Position> startListening(
+  static Future<StreamSubscription<Position>> startListening(
     Function(LatLng) onLocationChanged,
     Function err,
-  ) {
+  ) async {
     return Geolocator.getPositionStream(
       locationSettings: locationSettings,
     ).listen((Position? position) {
@@ -94,9 +94,16 @@ class LocationPermissionDialog extends StatelessWidget {
                 children:
                     (requestAlways
                         ? <InlineSpan>[
-                          TextSpan(
-                            text: "Armour needs access to your location ",
+                          WidgetSpan(
+                            child: SizedBox(
+                              height: 22,
+                              child: SvgPicture.asset(
+                                "assets/images/gradient-wordmark.svg",
+                                height: 14,
+                              ),
+                            ),
                           ),
+                          TextSpan(text: " needs access to your location "),
                           TextSpan(
                             text: "in the background",
                             style: TextStyle(fontWeight: FontWeight.bold),
@@ -113,11 +120,20 @@ class LocationPermissionDialog extends StatelessWidget {
                           ),
                         ]
                         : <InlineSpan>[
-                          TextSpan(
-                            text: "Armour needs to access your location to ",
+                          WidgetSpan(
+                            child: SizedBox(
+                              height: 22,
+                              child: SvgPicture.asset(
+                                "assets/images/gradient-wordmark.svg",
+                                height: 14,
+                              ),
+                            ),
                           ),
                           TextSpan(
-                            text: "enable alerts and location sharing",
+                            text: " needs access to your location to enable ",
+                          ),
+                          TextSpan(
+                            text: "alerts and location sharing",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           TextSpan(text: ". Enable "),
@@ -125,7 +141,7 @@ class LocationPermissionDialog extends StatelessWidget {
                             text: "Precise Location",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          TextSpan(text: " in the next screen."),
+                          TextSpan(text: " access in the next screen."),
                         ]),
               ),
               textAlign: TextAlign.justify,

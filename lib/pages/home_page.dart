@@ -47,11 +47,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void startListening() async {
-    if (await LocationHelper.checkPermissions(context)) {
-      setState(() {
-        _isTrackingUser = true;
-      });
-      _positionStream = LocationHelper.startListening(
+    bool locationPermission = await LocationHelper.checkPermissions(context);
+
+    if (locationPermission) {
+      _positionStream = await LocationHelper.startListening(
         (coords) {
           setState(() {
             _isListening = true;
@@ -67,6 +66,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }),
         },
       );
+      setState(() {
+        _isTrackingUser = true;
+      });
     } else {
       setState(() {
         _isListening = false;
