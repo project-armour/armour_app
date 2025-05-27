@@ -91,7 +91,7 @@ class _HomePageSheetState extends State<HomePageSheet>
 
     return SheetViewport(
       child: Sheet(
-        initialOffset: SheetOffset.absolute(sheetHeights[1]),
+        initialOffset: SheetOffset.absolute(200),
         controller: sheetController,
         snapGrid: SheetSnapGrid(
           snaps:
