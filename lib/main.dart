@@ -1,10 +1,12 @@
 import 'package:armour_app/pages/home_page.dart';
+import 'package:armour_app/pages/location_permission_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 
 void main() {
   runApp(const MyApp());
 }
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -40,13 +42,14 @@ class _MyAppState extends State<MyApp> {
         colorScheme: schemeDark,
       ),*/
       themeMode: _themeMode,
-      home: HomePage(),
+      home: LocationPermissionPage(),
     );
   }
 
   void _toggleDark() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     });
   }
 }

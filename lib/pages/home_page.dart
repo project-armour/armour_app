@@ -41,10 +41,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       }
     });
+    
+    // Automatically start listening for location updates when the page loads
+    startListening();
   }
 
   void startListening() async {
-    if (await LocationHelper.checkPermissions(context)) {
+    bool locationAllowed = await LocationHelper.checkPermissions(context);
+    if (locationAllowed) {
       setState(() {
         _isTrackingUser = true;
       });
