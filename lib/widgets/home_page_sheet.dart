@@ -129,7 +129,7 @@ class _HomePageSheetState extends State<HomePageSheet>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
-                      height: sheetHeights.first + 130,
+                      height: sheetHeights.first + 160,
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 220),
                       decoration: BoxDecoration(
@@ -142,7 +142,6 @@ class _HomePageSheetState extends State<HomePageSheet>
                         border: Border(top: sheetBorder),
                       ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -210,7 +209,6 @@ class SheetAnimation extends StatelessWidget {
       animation: controller,
       builder: (context, child) {
         final deviceSize = MediaQuery.of(context).size;
-
         return Expanded(
           child: SizedBox(
             width: double.infinity,

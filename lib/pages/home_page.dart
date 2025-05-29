@@ -135,6 +135,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       children: [
         Scaffold(
           extendBodyBehindAppBar: true,
+          resizeToAvoidBottomInset: false,
           appBar: AppBar(
             centerTitle: true,
             toolbarHeight: 68,
