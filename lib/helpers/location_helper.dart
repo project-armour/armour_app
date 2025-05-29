@@ -44,19 +44,40 @@ class LocationHelper {
     return true;
   }
 
-  static Future<StreamSubscription<Position>> startListening(
-    Function(LatLng) onLocationChanged,
-    Function err,
-  ) async {
-    return Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen((Position? position) {
-      if (position != null) {
-        onLocationChanged(LatLng(position.latitude, position.longitude));
-      } else {
-        err();
+  static Future<bool> requestLocationService(BuildContext context) async {
+    bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    while (!isLocationServiceEnabled) {
+      if (context.mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => LocationServiceDialog(),
+        );
+        isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (isLocationServiceEnabled) return true;
+        await Geolocator.openLocationSettings();
       }
-    });
+    }
+    return true;
+  }
+
+  static Future<StreamSubscription<Position>?> startListening(
+    Function(LatLng) onLocationChanged,
+    Function() err,
+  ) async {
+    if (await Geolocator.isLocationServiceEnabled()) {
+      return Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen((Position? position) {
+        if (position != null) {
+          onLocationChanged(LatLng(position.latitude, position.longitude));
+        } else {
+          err();
+        }
+      });
+    } else {
+      return null;
+    }
   }
 }
 
@@ -145,6 +166,56 @@ class LocationPermissionDialog extends StatelessWidget {
                         ]),
               ),
               textAlign: TextAlign.justify,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 12,
+              children: [
+                TextButton(
+                  onPressed: () => SystemNavigator.pop(),
+                  child: Text("Close App"),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Continue"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LocationServiceDialog extends StatelessWidget {
+  const LocationServiceDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 12,
+          children: [
+            Icon(
+              LucideIcons.mapPinX300,
+              size: 80,
+              color: ColorScheme.of(context).error,
+            ),
+            SizedBox(height: 0),
+            Text(
+              "Enable location service",
+              style: TextTheme.of(context).headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "Your device's location service is switched off. please enable it in the next screen.",
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

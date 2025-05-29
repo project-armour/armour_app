@@ -1,10 +1,13 @@
 import 'package:armour_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 void main() {
+  FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
   runApp(const MyApp());
 }
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -14,7 +17,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Color primaryColor = const Color(0xFF2AB7F1);
-  ThemeMode _themeMode = ThemeMode.dark;
+  final ThemeMode _themeMode = ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
@@ -42,11 +45,5 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode,
       home: HomePage(),
     );
-  }
-
-  void _toggleDark() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
   }
 }

@@ -28,6 +28,7 @@ class AboveSheetActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           FloatingActionButton.small(
+            heroTag: "resetRotation",  // Add unique hero tag
             onPressed: resetRotationFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Transform.rotate(
@@ -36,6 +37,7 @@ class AboveSheetActions extends StatelessWidget {
             ),
           ),
           FloatingActionButton.small(
+            heroTag: "googleMaps",  // Add unique hero tag
             onPressed: googleMapsFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Center(
@@ -47,11 +49,13 @@ class AboveSheetActions extends StatelessWidget {
           ),
           Flexible(fit: FlexFit.tight, child: SizedBox()),
           FloatingActionButton.small(
+            heroTag: "share",  // Add unique hero tag
             onPressed: () {},
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Icon(LucideIcons.share2),
           ),
           FloatingActionButton.small(
+            heroTag: "locate",  // Add unique hero tag
             onPressed: focusFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Icon(

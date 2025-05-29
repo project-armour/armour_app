@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
+import 'package:armour_app/pages/bt_pair_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
+import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
 import 'package:armour_app/widgets/sheet_main_button.dart';
 import 'package:armour_app/widgets/user_marker.dart';
@@ -215,15 +217,15 @@ class SheetAnimation extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned(
-                  top: 8,
-                  left: 16,
-                  width: 160 + (deviceSize.width - 192) * controller.value,
-                  height: 50 + 20 * controller.value,
+                  top: 4,
+                  left: 20,
+                  width: 180 + (deviceSize.width - 212) * controller.value,
+                  height: 60 + 20 * controller.value,
                   child: BandStatus(animationValue: controller.value),
                 ),
                 Positioned(
                   top: 68 + 20 * controller.value,
-                  left: 16,
+                  left: 20,
                   child: Text(
                     "My Contacts",
                     style: TextTheme.of(context).titleLarge!.copyWith(
@@ -232,96 +234,17 @@ class SheetAnimation extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 8 + 116 * controller.value,
+                  top: 4 + 116 * controller.value,
                   right: 16,
-                  width: 160 + (deviceSize.width - 192) * controller.value,
-                  height: 50 + 140 * controller.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: ColorScheme.of(
-                        context,
-                      ).surfaceBright.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  width: 180 + (deviceSize.width - 212) * controller.value,
+                  height: 60 + 120 * controller.value,
+                  child: Card(margin: EdgeInsets.all(0)),
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class BandStatus extends StatelessWidget {
-  const BandStatus({super.key, required this.animationValue});
-
-  final double animationValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: ColorScheme.of(context).surfaceBright.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 8 + 4 * animationValue,
-          right: 8 + 4 * animationValue,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              spacing: 12,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: ColorScheme.of(context).surfaceBright,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Icon(
-                    LucideIcons.watch,
-                    size: 20 + 12 * animationValue,
-                  ),
-                ),
-                Text(
-                  "My Armour Band",
-                  style: TextTheme.of(context).titleMedium!.copyWith(
-                    fontSize: 18 * animationValue,
-                    color: Colors.white.withValues(alpha: animationValue),
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              spacing: 2 * animationValue,
-              children: [
-                Row(
-                  spacing: 4,
-                  children: [
-                    Text("72%", style: TextTheme.of(context).bodyMedium),
-                    Icon(LucideIcons.batteryMedium, size: 18),
-                  ],
-                ),
-                Row(
-                  spacing: 6,
-                  children: [
-                    Text("Connected", style: TextTheme.of(context).bodyMedium),
-                    Icon(LucideIcons.bluetoothConnected, size: 16),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

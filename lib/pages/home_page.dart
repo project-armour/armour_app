@@ -24,7 +24,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   late List<UserMarker> markers;
-  late StreamSubscription<Position> _positionStream;
+  late StreamSubscription<Position>? _positionStream;
 
   bool _isListening = false;
   bool _isTrackingUser = false;
@@ -53,7 +53,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _positionStream = await LocationHelper.startListening(
         (coords) {
           setState(() {
-            _isListening = true;
             currentLocation = coords;
             if (_isTrackingUser) {
               AnimateMap.move(this, _mapController, coords, destZoom: 16);
@@ -66,9 +65,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }),
         },
       );
-      setState(() {
-        _isTrackingUser = true;
-      });
+      if (_positionStream != null) {
+        setState(() {
+          _isListening = true;
+          _isTrackingUser = true;
+        });
+      } else {
+        if (mounted) {
+          // TODO: Start listening again after the user enables location services
+          LocationHelper.requestLocationService(context);
+        }
+        setState(() {
+          _isListening = false;
+          _isTrackingUser = false;
+        });
+      }
     } else {
       setState(() {
         _isListening = false;
@@ -91,7 +102,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _positionStream.cancel();
+    _positionStream?.cancel();
     super.dispose();
   }
 

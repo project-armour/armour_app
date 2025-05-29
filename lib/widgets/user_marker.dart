@@ -133,13 +133,7 @@ class UserMarker {
               color: Theme.of(context).colorScheme.surfaceBright,
             ),
             child: ClipOval(
-              child: Image.asset(
-                'assets/images/default_profile.png', // Replace with actual profile image path
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(Icons.person, size: 24, color: Colors.grey);
-                },
-              ),
+              child: Icon(Icons.person, size: 24, color: Colors.grey),
             ),
           ),
           Container(
