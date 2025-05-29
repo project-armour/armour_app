@@ -132,17 +132,17 @@ class BluetoothDisconnected extends StatelessWidget {
             spacing: 12,
             children: [
               TextButton(
-                onPressed: () => SystemNavigator.pop(),
-                child: Text("Close App"),
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
               ),
               FilledButton(
                 onPressed: () async {
                   if (Platform.isAndroid && await FlutterBluePlus.isSupported) {
                     try {
                       await FlutterBluePlus.turnOn();
-                    } on PlatformException catch (e) {
+                    } on PlatformException catch (_) {
                       Geolocator.openAppSettings();
-                    }
+                    } on FlutterBluePlusException catch (_) {}
                   }
                 },
                 child: Text("Continue"),
@@ -154,7 +154,7 @@ class BluetoothDisconnected extends StatelessWidget {
     );
   }
 }
-
+/*
 class BluetoothPermissionDialog extends StatelessWidget {
   const BluetoothPermissionDialog({super.key});
 
@@ -234,3 +234,4 @@ class BluetoothPermissionDialog extends StatelessWidget {
     );
   }
 }
+*/
