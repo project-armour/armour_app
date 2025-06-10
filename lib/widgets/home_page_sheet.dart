@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
-import 'package:armour_app/pages/bt_pair_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
@@ -19,6 +18,7 @@ class HomePageSheet extends StatefulWidget {
     this.mapController,
     this.markers = const [],
     this.isTracking = false,
+    this.walkingPace,
     required this.trackUser,
   });
 
@@ -26,6 +26,7 @@ class HomePageSheet extends StatefulWidget {
   final List<UserMarker> markers;
   final bool isTracking;
   final VoidCallback trackUser;
+  final double? walkingPace;
 
   @override
   State<HomePageSheet> createState() => _HomePageSheetState();
@@ -129,7 +130,7 @@ class _HomePageSheetState extends State<HomePageSheet>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
-                      height: sheetHeights.first + 160,
+                      height: sheetHeights.first + 130,
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 220),
                       decoration: BoxDecoration(
@@ -163,8 +164,8 @@ class _HomePageSheetState extends State<HomePageSheet>
                                 onPressed: () {},
                               ),
                               SheetMainButton(
-                                text: "WPM",
-                                icon: LucideIcons.phoneCall,
+                                text: "Settings",
+                                icon: LucideIcons.settings,
                                 onPressed: () {},
                               ),
                             ],
@@ -174,6 +175,7 @@ class _HomePageSheetState extends State<HomePageSheet>
                           SheetAnimation(
                             controller: animationController,
                             sheetHeights: sheetHeights,
+                            walkingPace: widget.walkingPace,
                           ),
                         ],
                       ),
@@ -198,10 +200,12 @@ class SheetAnimation extends StatelessWidget {
     super.key,
     required this.controller,
     required this.sheetHeights,
+    this.walkingPace,
   });
 
   final AnimationController controller;
   final List<double> sheetHeights;
+  final double? walkingPace;
 
   @override
   Widget build(BuildContext context) {
@@ -222,21 +226,67 @@ class SheetAnimation extends StatelessWidget {
                   child: BandStatus(animationValue: controller.value),
                 ),
                 Positioned(
-                  top: 68 + 20 * controller.value,
-                  left: 20,
-                  child: Text(
-                    "My Contacts",
-                    style: TextTheme.of(context).titleLarge!.copyWith(
-                      color: Colors.white.withValues(alpha: controller.value),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 4 + 116 * controller.value,
+                  top: 4 + 96 * controller.value,
                   right: 16,
                   width: 180 + (deviceSize.width - 212) * controller.value,
-                  height: 60 + 120 * controller.value,
-                  child: Card(margin: EdgeInsets.all(0)),
+                  height: 60 + 20 * controller.value,
+                  child: Card(
+                    margin: EdgeInsets.all(0),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        12 + 4 * controller.value,
+                        0 + 4 * controller.value,
+                        12 + 4 * controller.value,
+                        0 + 4 * controller.value,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 2,
+                        children: [
+                          Row(
+                            spacing: 2 + 4 * controller.value,
+                            children: [
+                              Icon(
+                                LucideIcons.footprints300,
+                                size: 18 + 4 * controller.value,
+                              ),
+                              Text(
+                                "Walking Pace:",
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontSize: 16 * controller.value),
+                              ),
+                              walkingPace != null
+                                  ? Text(
+                                    "${walkingPace!.toStringAsFixed(2)} m/s",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                  )
+                                  : Text("N/A"),
+                            ],
+                          ),
+                          Row(
+                            spacing: 2 + 4 * controller.value,
+                            children: [
+                              Icon(
+                                LucideIcons.heartPulse300,
+                                size: 18 + 4 * controller.value,
+                              ),
+                              Text(
+                                "Heart Rate:",
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontSize: 16 * controller.value),
+                              ),
+                              Text("N/A"),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

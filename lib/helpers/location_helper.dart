@@ -62,7 +62,7 @@ class LocationHelper {
   }
 
   static Future<StreamSubscription<Position>?> startListening(
-    Function(LatLng) onLocationChanged,
+    Function(LatLng, double) onLocationChanged,
     Function() err,
   ) async {
     if (await Geolocator.isLocationServiceEnabled()) {
@@ -70,7 +70,11 @@ class LocationHelper {
         locationSettings: locationSettings,
       ).listen((Position? position) {
         if (position != null) {
-          onLocationChanged(LatLng(position.latitude, position.longitude));
+          double speed = position.speed; // Speed in m/s
+          onLocationChanged(
+            LatLng(position.latitude, position.longitude),
+            speed,
+          );
         } else {
           err();
         }

@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isListening = false;
   bool _isTrackingUser = false;
   LatLng currentLocation = LatLng(12.9716, 77.5946);
+  double speedMps = 0.0;
 
   @override
   void initState() {
@@ -51,8 +52,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (locationPermission) {
       _positionStream = await LocationHelper.startListening(
-        (coords) {
+        (coords, speed) {
           setState(() {
+            speedMps = speed;
             currentLocation = coords;
             if (_isTrackingUser) {
               AnimateMap.move(this, _mapController, coords, destZoom: 16);
@@ -165,9 +167,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            actions: [
-              IconButton(onPressed: () {}, icon: Icon(LucideIcons.settings)),
-            ],
           ),
           body: Stack(
             children: [
@@ -223,6 +222,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           markers: markers,
           isTracking: _isTrackingUser,
           trackUser: trackUser,
+          walkingPace: speedMps,
         ),
       ],
     );

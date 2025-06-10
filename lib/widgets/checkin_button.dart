@@ -27,7 +27,7 @@ class CheckInButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.shieldCheck),
+            Icon(LucideIcons.shieldCheck300),
             Text(
               "Check-in",
               style: Theme.of(context).textTheme.labelMedium?.copyWith(

@@ -57,16 +57,17 @@ class BandStatus extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 spacing: 2 + 2 * animationValue,
                 children: [
-                  Row(
-                    spacing: 4,
-                    children: [
-                      Text("72%", style: TextTheme.of(context).bodyMedium),
-                      RotatedBox(
-                        quarterTurns: -1,
-                        child: Icon(LucideIcons.batteryMedium300, size: 18),
-                      ),
-                    ],
-                  ),
+                  if (isConnected)
+                    Row(
+                      spacing: 4,
+                      children: [
+                        Text("72%", style: TextTheme.of(context).bodyMedium),
+                        RotatedBox(
+                          quarterTurns: -1,
+                          child: Icon(LucideIcons.batteryMedium300, size: 18),
+                        ),
+                      ],
+                    ),
                   Row(
                     spacing: 6,
                     children: [
