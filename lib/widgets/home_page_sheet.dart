@@ -220,7 +220,7 @@ class SheetAnimation extends StatelessWidget {
               children: [
                 Positioned(
                   top: 4,
-                  left: 20,
+                  left: 16,
                   width: 180 + (deviceSize.width - 212) * controller.value,
                   height: 60 + 20 * controller.value,
                   child: BandStatus(animationValue: controller.value),
