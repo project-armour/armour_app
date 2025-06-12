@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
+import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
@@ -155,7 +156,14 @@ class _HomePageSheetState extends State<HomePageSheet>
                               SheetMainButton(
                                 text: "Panic",
                                 icon: LucideIcons.messageCircle,
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const PanicPage(),
+                                    ),
+                                  );
+                                },
                               ),
                               SizedBox(width: 72),
                               SheetMainButton(
