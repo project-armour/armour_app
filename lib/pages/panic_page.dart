@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 import 'package:torch_light/torch_light.dart';
 
 class PanicPage extends StatefulWidget {
@@ -43,12 +44,9 @@ class _PanicPageState extends State<PanicPage> {
   int _index = 0;
   Set<Options> selection = <Options>{Options.sos};
   bool _hasTorch = false;
+  double? oldBrightness;
 
-  static const List<Color> _blinkColors = [
-    Colors.red,
-    Colors.white,
-    Colors.blue,
-  ];
+  static const List<Color> _blinkColors = [Color(0xFFFF0000), Colors.white];
 
   void _runMorseStep() {
     if (!selection.contains(Options.sos)) {
@@ -127,12 +125,14 @@ class _PanicPageState extends State<PanicPage> {
     super.initState();
     _checkTorch();
     _restartTimer();
+    ScreenBrightness.instance.setApplicationScreenBrightness(1);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+    ScreenBrightness.instance.resetApplicationScreenBrightness();
   }
 
   @override

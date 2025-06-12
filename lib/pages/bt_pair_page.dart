@@ -48,12 +48,16 @@ class _BtPairPageState extends State<BtPairPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Connect your Armour Band")),
+      appBar: AppBar(
+        title: Text("Connect your Armour Band"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body:
           _adapterState == BluetoothAdapterState.off ||
                   _adapterState == BluetoothAdapterState.unknown
               ? BluetoothDisconnected()
-              : Placeholder(),
+              : DeviceSelection(),
     );
   }
 }
@@ -151,6 +155,124 @@ class BluetoothDisconnected extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class DeviceSelection extends StatefulWidget {
+  const DeviceSelection({super.key});
+
+  @override
+  State<DeviceSelection> createState() => _DeviceSelectionState();
+}
+
+class _DeviceSelectionState extends State<DeviceSelection> {
+  List<ScanResult> scanResults = [];
+  bool isScanning = false;
+  late StreamSubscription<List<ScanResult>> subscription;
+  late StreamSubscription? scanListener;
+
+  Future<void> startScan() async {
+    final completer = Completer<void>();
+
+    // Listen for scan results
+    subscription = FlutterBluePlus.onScanResults.listen((results) {
+      if (results.isNotEmpty) {
+        setState(() {
+          scanResults = results;
+        });
+      }
+    }, onError: (e) => print('Scan results error: $e'));
+
+    try {
+      await FlutterBluePlus.startScan(timeout: Duration(seconds: 15));
+    } catch (e) {
+      setState(() {
+        isScanning = false;
+      });
+      print('Error starting scan: $e');
+      completer.complete(); // Complete even on error
+    }
+
+    scanListener = FlutterBluePlus.isScanning.listen((scanning) {
+      setState(() {
+        isScanning = scanning;
+      });
+      if (!scanning) {
+        completer.complete();
+        scanListener?.cancel();
+      }
+    });
+
+    FlutterBluePlus.cancelWhenScanComplete(subscription);
+    return completer.future;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    startScan();
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    scanListener?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      displacement: 20,
+      backgroundColor: ColorScheme.of(context).surfaceContainerLow,
+      onRefresh: () {
+        return startScan();
+      },
+      child:
+          scanResults.isEmpty
+              ? Center(
+                child: Text(
+                  isScanning
+                      ? 'Searching for devices...'
+                      : 'No devices found. Swipe down to retry.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+              : ListView.builder(
+                itemCount: scanResults.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return ListTile(
+                    title: Text(
+                      scanResults[index].device.platformName.isNotEmpty
+                          ? scanResults[index].device.platformName
+                          : 'Unknown Device',
+                    ),
+                    subtitle: Text(
+                      scanResults[index].device.remoteId.toString(),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${scanResults[index].rssi} dBm'),
+                        SizedBox(width: 8),
+                        Icon(LucideIcons.bluetooth200),
+                      ],
+                    ),
+                    onTap: () {
+                      // Show connecting indicator
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Connecting to ${scanResults[index].device.platformName}...',
+                          ),
+                        ),
+                      );
+                      // Add your connection logic here
+                    },
+                  );
+                },
+              ),
     );
   }
 }
