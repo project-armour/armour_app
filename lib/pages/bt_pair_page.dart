@@ -185,7 +185,10 @@ class _DeviceSelectionState extends State<DeviceSelection> {
     }, onError: (e) => print('Scan results error: $e'));
 
     try {
-      await FlutterBluePlus.startScan(timeout: Duration(seconds: 15));
+      await FlutterBluePlus.startScan(
+        timeout: Duration(seconds: 10),
+        withServices: [Guid.fromString("0cc04a2c-b3c2-4431-a6f1-b9180ebce500")],
+      );
     } catch (e) {
       setState(() {
         isScanning = false;
@@ -206,6 +209,35 @@ class _DeviceSelectionState extends State<DeviceSelection> {
 
     FlutterBluePlus.cancelWhenScanComplete(subscription);
     return completer.future;
+  }
+
+  // TODO: Fix connection
+  connectToDevice(ScanResult result) async {
+    BluetoothDevice device = result.device;
+
+    device.connectionState.listen((BluetoothConnectionState state) {
+      if (state == BluetoothConnectionState.connected) {
+        print("Connected to device");
+        checkConnect(device);
+      } else if (state == BluetoothConnectionState.disconnected) {
+        print('Disconnected from the device!');
+        // Handle disconnection
+      }
+    });
+
+    device.connect(
+      timeout: Duration(seconds: 10),
+      autoConnect: true,
+      mtu: null,
+    );
+
+    print("Trying to connect to ${device.platformName}...");
+  }
+
+  // TODO: Change this (temporary)
+  checkConnect(BluetoothDevice device) async {
+    List<BluetoothService> services = await device.discoverServices();
+    print(services);
   }
 
   @override
