@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -54,10 +55,9 @@ class _BtPairPageState extends State<BtPairPage> {
         elevation: 0,
       ),
       body:
-          _adapterState == BluetoothAdapterState.off ||
-                  _adapterState == BluetoothAdapterState.unknown
-              ? BluetoothDisconnected()
-              : DeviceSelection(),
+          _adapterState == BluetoothAdapterState.on
+              ? DeviceSelection()
+              : BluetoothDisconnected(),
     );
   }
 }
@@ -211,37 +211,9 @@ class _DeviceSelectionState extends State<DeviceSelection> {
     return completer.future;
   }
 
-  // TODO: Fix connection
-  connectToDevice(ScanResult result) async {
-    BluetoothDevice device = result.device;
-
-    device.connectionState.listen((BluetoothConnectionState state) {
-      if (state == BluetoothConnectionState.connected) {
-        print("Connected to device");
-        checkConnect(device);
-      } else if (state == BluetoothConnectionState.disconnected) {
-        print('Disconnected from the device!');
-        // Handle disconnection
-      }
-    });
-
-    device.connect(
-      timeout: Duration(seconds: 10),
-      autoConnect: true,
-      mtu: null,
-    );
-
-    print("Trying to connect to ${device.platformName}...");
-  }
-
-  // TODO: Change this (temporary)
-  checkConnect(BluetoothDevice device) async {
-    List<BluetoothService> services = await device.discoverServices();
-    print(services);
-  }
-
   @override
   void initState() {
+    print("Initstate");
     super.initState();
     startScan();
   }
@@ -261,50 +233,76 @@ class _DeviceSelectionState extends State<DeviceSelection> {
       onRefresh: () {
         return startScan();
       },
-      child:
-          scanResults.isEmpty
-              ? Center(
-                child: Text(
-                  isScanning
-                      ? 'Searching for devices...'
-                      : 'No devices found. Swipe down to retry.',
-                  textAlign: TextAlign.center,
-                ),
-              )
-              : ListView.builder(
-                itemCount: scanResults.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return ListTile(
-                    title: Text(
-                      scanResults[index].device.platformName.isNotEmpty
-                          ? scanResults[index].device.platformName
-                          : 'Unknown Device',
-                    ),
-                    subtitle: Text(
-                      scanResults[index].device.remoteId.toString(),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${scanResults[index].rssi} dBm'),
-                        SizedBox(width: 8),
-                        Icon(LucideIcons.bluetooth200),
-                      ],
-                    ),
-                    onTap: () {
-                      // Show connecting indicator
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Connecting to ${scanResults[index].device.platformName}...',
-                          ),
-                        ),
-                      );
-                      // Add your connection logic here
-                    },
-                  );
-                },
+      child: Stack(
+        children: [
+          if (scanResults.isEmpty)
+            Center(
+              child: Text(
+                isScanning
+                    ? 'Searching for devices...'
+                    : 'No devices found. Swipe down to retry.',
+                textAlign: TextAlign.center,
               ),
+            ),
+          ListView.builder(
+            itemCount: scanResults.length,
+            itemBuilder: (BuildContext context, int index) {
+              return ListTile(
+                title: Text(
+                  scanResults[index].device.platformName.isNotEmpty
+                      ? scanResults[index].device.platformName
+                      : 'Unknown Device',
+                ),
+                subtitle: Text(scanResults[index].device.remoteId.toString()),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${scanResults[index].rssi} dBm'),
+                    SizedBox(width: 8),
+                    Icon(LucideIcons.bluetooth200),
+                  ],
+                ),
+                onTap: () async {
+                  // Show connecting indicator
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Connecting to ${scanResults[index].device.platformName}...',
+                      ),
+                    ),
+                  );
+                  try {
+                    BluetoothDevice device = scanResults[index].device;
+
+                    await device.connect(autoConnect: false);
+
+                    // Discover services
+                    List<BluetoothService> services =
+                        await device.discoverServices();
+
+                    print(
+                      "-------------------------${device.advName}-----------------------------",
+                    );
+
+                    if (!context.mounted) return;
+                    Navigator.pop(context, device);
+                  } catch (e) {
+                    print(e);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.redAccent,
+                        content: Text('Connection Failed'),
+                      ),
+                    );
+                  }
+                  // Add your connection logic here
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

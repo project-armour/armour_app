@@ -5,6 +5,7 @@ import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
+import 'package:armour_app/widgets/heart_rate_monitor.dart';
 import 'package:armour_app/widgets/sheet_main_button.dart';
 import 'package:armour_app/widgets/user_marker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -238,62 +239,9 @@ class SheetAnimation extends StatelessWidget {
                   right: 16,
                   width: 180 + (deviceSize.width - 212) * controller.value,
                   height: 60 + 20 * controller.value,
-                  child: Card(
-                    margin: EdgeInsets.all(0),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        12 + 4 * controller.value,
-                        0 + 4 * controller.value,
-                        12 + 4 * controller.value,
-                        0 + 4 * controller.value,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 2,
-                        children: [
-                          Row(
-                            spacing: 2 + 4 * controller.value,
-                            children: [
-                              Icon(
-                                LucideIcons.footprints300,
-                                size: 18 + 4 * controller.value,
-                              ),
-                              Text(
-                                "Walking Pace:",
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontSize: 16 * controller.value),
-                              ),
-                              walkingPace != null
-                                  ? Text(
-                                    "${walkingPace!.toStringAsFixed(2)} m/s",
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                  )
-                                  : Text("N/A"),
-                            ],
-                          ),
-                          Row(
-                            spacing: 2 + 4 * controller.value,
-                            children: [
-                              Icon(
-                                LucideIcons.heartPulse300,
-                                size: 18 + 4 * controller.value,
-                              ),
-                              Text(
-                                "Heart Rate:",
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontSize: 16 * controller.value),
-                              ),
-                              Text("N/A"),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: HeartRateMonitor(
+                    controller: controller,
+                    walkingPace: walkingPace,
                   ),
                 ),
               ],
