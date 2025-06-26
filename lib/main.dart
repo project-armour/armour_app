@@ -1,11 +1,13 @@
+import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
-  runApp(const MyApp());
+  runApp(ChangeNotifierProvider(create: (_) => BluetoothDeviceProvider(), child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {

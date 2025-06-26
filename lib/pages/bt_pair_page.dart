@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 class BtPairPage extends StatefulWidget {
   const BtPairPage({super.key});
@@ -227,6 +229,12 @@ class _DeviceSelectionState extends State<DeviceSelection> {
 
   @override
   Widget build(BuildContext context) {
+    final deviceProvider = Provider.of<BluetoothDeviceProvider>(
+      context,
+      listen: false,
+    );
+    final device = deviceProvider.device;
+
     return RefreshIndicator(
       displacement: 20,
       backgroundColor: ColorScheme.of(context).surfaceContainerLow,
@@ -276,16 +284,13 @@ class _DeviceSelectionState extends State<DeviceSelection> {
 
                     await device.connect(autoConnect: false);
 
-                    // Discover services
-                    List<BluetoothService> services =
-                        await device.discoverServices();
-
-                    print(
-                      "-------------------------${device.advName}-----------------------------",
-                    );
+                    if (device.isConnected) {
+                      print("Isconnected True");
+                      deviceProvider.setDevice(device);
+                    }
 
                     if (!context.mounted) return;
-                    Navigator.pop(context, device);
+                    Navigator.pop(context);
                   } catch (e) {
                     print(e);
 

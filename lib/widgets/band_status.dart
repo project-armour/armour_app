@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/bt_pair_page.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 
 class BandStatus extends StatefulWidget {
   BandStatus({super.key, required this.animationValue});
@@ -16,15 +19,34 @@ class BandStatus extends StatefulWidget {
 
 class _BandStatusState extends State<BandStatus> {
   final int batteryLevel = 72;
-
+  BluetoothDevice? connectedDevice;
   bool isConnected = false;
+  late BluetoothDeviceProvider deviceProvider;
 
-  BluetoothDevice? device;
-  StreamSubscription<BluetoothConnectionState>? connectionSubscription;
+  void updateDevice() {
+    print("UPDATE DEVICE");
+    setState(() {
+      connectedDevice = deviceProvider.device;
+      if (connectedDevice != null) {
+        isConnected = connectedDevice!.isConnected;
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    deviceProvider = Provider.of<BluetoothDeviceProvider>(
+      context,
+      listen: true,
+    );
+    deviceProvider!.addListener(updateDevice);
+  }
 
   @override
   void dispose() {
-    connectionSubscription?.cancel();
+    deviceProvider.removeListener(updateDevice);
     super.dispose();
   }
 
@@ -35,22 +57,9 @@ class _BandStatusState extends State<BandStatus> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          device = await Navigator.of(
+          await Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (context) => BtPairPage()));
-          if (device != null) {
-            connectionSubscription = device?.connectionState.listen((state) {
-              if (state == BluetoothConnectionState.connected) {
-                setState(() {
-                  isConnected = true;
-                });
-              } else {
-                setState(() {
-                  isConnected = false;
-                });
-              }
-            });
-          }
         },
         child: Padding(
           padding: EdgeInsets.only(
