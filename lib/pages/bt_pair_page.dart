@@ -285,7 +285,6 @@ class _DeviceSelectionState extends State<DeviceSelection> {
                     await device.connect(autoConnect: false);
 
                     if (device.isConnected) {
-                      print("Isconnected True");
                       deviceProvider.setDevice(device);
                     }
 

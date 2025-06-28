@@ -1,8 +1,7 @@
-import 'dart:async';
+import 'dart:convert';
 
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/bt_pair_page.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -29,8 +28,51 @@ class _BandStatusState extends State<BandStatus> {
       connectedDevice = deviceProvider.device;
       if (connectedDevice != null) {
         isConnected = connectedDevice!.isConnected;
+
+        if (isConnected) {
+          sendHB(connectedDevice!);
+        }
+      } else {
+        isConnected = false;
       }
     });
+  }
+
+  void sendHB(BluetoothDevice device) async {
+    try {
+      List<BluetoothService> services = await device.discoverServices();
+
+      for (BluetoothService service in services) {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
+          print("${characteristic.uuid}: ${characteristic.properties}");
+          if (characteristic.properties.notify) {
+            await characteristic.setNotifyValue(true, forceIndications: true);
+
+            // Listen for notifications
+            characteristic.onValueReceived.listen((value) {
+              print("Received Notification");
+              print("${characteristic.uuid}: ${utf8.decode(value)}");
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "${characteristic.uuid}: ${utf8.decode(value)}",
+                    ),
+                  ),
+                );
+              }
+            });
+
+            return; // Done
+          }
+        }
+      }
+
+      print("Heart Rate characteristic not found.");
+    } catch (e) {
+      print("Error in heart rate setup: $e");
+    }
   }
 
   @override
@@ -41,7 +83,7 @@ class _BandStatusState extends State<BandStatus> {
       context,
       listen: true,
     );
-    deviceProvider!.addListener(updateDevice);
+    deviceProvider.addListener(updateDevice);
   }
 
   @override
@@ -100,28 +142,24 @@ class _BandStatusState extends State<BandStatus> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 spacing: 2 + 2 * widget.animationValue,
                 children: [
-                  if (isConnected)
-                    Row(
-                      spacing: 4,
-                      children: [
-                        Text("72%", style: TextTheme.of(context).bodyMedium),
-                        RotatedBox(
-                          quarterTurns: -1,
-                          child: Icon(LucideIcons.batteryMedium300, size: 18),
-                        ),
-                      ],
-                    ),
                   Row(
                     spacing: 6,
                     children: [
-                      Text(
-                        isConnected ? "Connected" : "Not connected",
-                        style:
-                            isConnected
-                                ? TextTheme.of(context).bodySmall
-                                : TextTheme.of(
-                                  context,
-                                ).bodySmall!.copyWith(color: Colors.red[300]),
+                      SizedBox(
+                        width: 84,
+                        child: Text(
+                          isConnected
+                              ? "Connected to ${connectedDevice?.advName}"
+                              : "Not connected",
+                          style:
+                              isConnected
+                                  ? TextTheme.of(context).bodySmall
+                                  : TextTheme.of(
+                                    context,
+                                  ).bodySmall!.copyWith(color: Colors.red[300]),
+
+                          softWrap: true,
+                        ),
                       ),
                       Icon(
                         isConnected
