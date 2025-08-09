@@ -5,6 +5,7 @@ import 'package:armour_app/helpers/animated_map.dart';
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
+import 'package:armour_app/main.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
@@ -167,6 +168,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           "assets/images/gradient-wordmark.svg",
           height: 24,
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              supabase.auth.signOut();
+            },
+            icon: Icon(LucideIcons.logOut),
+          ),
+        ],
         flexibleSpace: ClipRRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),

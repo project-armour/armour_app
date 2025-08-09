@@ -39,7 +39,6 @@ class _HomePageSheetState extends State<HomePageSheet>
   final sheetHeights = [450.0, 200.0];
   late final SheetController sheetController;
   late final AnimationController animationController;
-  late final ValueNotifier<UserMarker>? userLocation;
 
   @override
   void initState() {
@@ -76,7 +75,6 @@ class _HomePageSheetState extends State<HomePageSheet>
     sheetController.removeListener(_updateAnimationFromSheet);
     sheetController.dispose();
     animationController.dispose();
-    userLocation!.dispose();
     super.dispose();
   }
 

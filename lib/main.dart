@@ -1,14 +1,28 @@
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/home_page.dart';
+import 'package:armour_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+Future<void> main() async {
   FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
-  runApp(ChangeNotifierProvider(create: (_) => BluetoothDeviceProvider(), child: MyApp()));
+  await Supabase.initialize(
+    url: 'https://itmoiuiugcozsppznorl.supabase.co',
+    anonKey: 'sb_publishable_H5r64NixD1bYXHoYWbFuzw_sfajBybk',
+  );
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => BluetoothDeviceProvider(),
+      child: MyApp(),
+    ),
+  );
 }
+
+final supabase = Supabase.instance.client;
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -20,6 +34,29 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Color primaryColor = const Color(0xFF2AB7F1);
   final ThemeMode _themeMode = ThemeMode.dark;
+
+  bool loginState = false;
+
+  @override
+  void initState() {
+    _setupAuthListener();
+    super.initState();
+  }
+
+  void _setupAuthListener() {
+    supabase.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        setState(() {
+          loginState = true;
+        });
+      } else {
+        setState(() {
+          loginState = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +82,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: schemeDark,
       ),*/
       themeMode: _themeMode,
-      home: HomePage(),
+      home: loginState ? HomePage() : LoginPage(),
     );
   }
 }
