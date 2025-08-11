@@ -46,7 +46,11 @@ class _MyAppState extends State<MyApp> {
   void _setupAuthListener() {
     supabase.auth.onAuthStateChange.listen((data) {
       final event = data.event;
-      if (event == AuthChangeEvent.signedIn) {
+      if (event == AuthChangeEvent.initialSession) {
+        setState(() {
+          loginState = data.session != null;
+        });
+      } else if (event == AuthChangeEvent.signedIn) {
         setState(() {
           loginState = true;
         });

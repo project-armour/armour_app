@@ -22,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   final pwdController = TextEditingController();
   final pwdConfController = TextEditingController();
 
+  bool showPassword = false;
+
   bool loading = false;
 
   var errorTexts = ["", "", ""];
@@ -61,7 +63,6 @@ class _LoginPageState extends State<LoginPage> {
       try {
         await supabase.auth.signInWithPassword(email: email, password: pwd);
       } on AuthException catch (e) {
-        print(e);
         if (e.code != null) {
           if (e.code!.contains("email")) {
             setState(() {
@@ -121,7 +122,13 @@ class _LoginPageState extends State<LoginPage> {
 
     if (errorTexts.every((str) => str.isEmpty)) {
       try {
-        await supabase.auth.signUp(email: email, password: pwd);
+        AuthResponse resp = await supabase.auth.signUp(
+          email: email,
+          password: pwd,
+        );
+        if (resp.user != null) {
+          supabase.auth.signInWithPassword(email: email, password: pwd);
+        }
       } on AuthWeakPasswordException catch (e) {
         setState(() {
           errorTexts[1] = errorTexts[2] = e.message;
@@ -227,7 +234,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       TextField(
                         controller: pwdController,
-                        obscureText: true,
+                        obscureText: !showPassword,
+                        obscuringCharacter: '⬤',
                         onChanged: (value) {
                           if (errorTexts[1] != '') {
                             setState(() {
@@ -241,12 +249,25 @@ class _LoginPageState extends State<LoginPage> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                showPassword = !showPassword;
+                              });
+                            },
+                            icon: Icon(
+                              showPassword
+                                  ? LucideIcons.eye
+                                  : LucideIcons.eyeOff,
+                            ),
+                          ),
                         ),
                       ),
                       if (!loginMode)
                         TextField(
                           controller: pwdConfController,
-                          obscureText: true,
+                          obscureText: !showPassword,
+                          obscuringCharacter: '⬤',
                           onChanged: (value) {
                             if (errorTexts[2] != '') {
                               setState(() {
@@ -260,6 +281,18 @@ class _LoginPageState extends State<LoginPage> {
                                 errorTexts[2] != '' ? errorTexts[2] : null,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  showPassword = !showPassword;
+                                });
+                              },
+                              icon: Icon(
+                                showPassword
+                                    ? LucideIcons.eye
+                                    : LucideIcons.eyeOff,
+                              ),
                             ),
                           ),
                         ),
