@@ -22,12 +22,14 @@ class HomePageSheet extends StatefulWidget {
     this.isTracking = false,
     this.walkingPace,
     required this.trackUser,
+    required this.shareLocation,
   });
 
   final MapController? mapController;
   final List<UserMarker> markers;
   final bool isTracking;
   final VoidCallback trackUser;
+  final VoidCallback shareLocation;
   final double? walkingPace;
 
   @override
@@ -120,6 +122,9 @@ class _HomePageSheetState extends State<HomePageSheet>
                     UrlLaunchHelper.checkAndLaunchUrl(
                       'geo:${userLocation.latitude},${userLocation.longitude}',
                     );
+                  },
+                  shareFunction: () {
+                    widget.shareLocation();
                   },
                 ),
                 ClipRRect(

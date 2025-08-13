@@ -9,12 +9,14 @@ class AboveSheetActions extends StatelessWidget {
     required this.focusFunction,
     required this.resetRotationFunction,
     required this.googleMapsFunction,
+    required this.shareFunction,
     required this.isTracking,
   });
 
   final VoidCallback focusFunction;
   final VoidCallback resetRotationFunction;
   final VoidCallback googleMapsFunction;
+  final VoidCallback shareFunction;
   final bool isTracking;
 
   @override
@@ -28,7 +30,7 @@ class AboveSheetActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           FloatingActionButton.small(
-            heroTag: "resetRotation",  // Add unique hero tag
+            heroTag: "resetRotation", // Add unique hero tag
             onPressed: resetRotationFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Transform.rotate(
@@ -37,7 +39,7 @@ class AboveSheetActions extends StatelessWidget {
             ),
           ),
           FloatingActionButton.small(
-            heroTag: "googleMaps",  // Add unique hero tag
+            heroTag: "googleMaps", // Add unique hero tag
             onPressed: googleMapsFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Center(
@@ -49,13 +51,13 @@ class AboveSheetActions extends StatelessWidget {
           ),
           Flexible(fit: FlexFit.tight, child: SizedBox()),
           FloatingActionButton.small(
-            heroTag: "share",  // Add unique hero tag
-            onPressed: () {},
+            heroTag: "share", // Add unique hero tag
+            onPressed: shareFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Icon(LucideIcons.share2),
           ),
           FloatingActionButton.small(
-            heroTag: "locate",  // Add unique hero tag
+            heroTag: "locate", // Add unique hero tag
             onPressed: focusFunction,
             backgroundColor: Theme.of(context).colorScheme.onPrimaryFixed,
             child: Icon(

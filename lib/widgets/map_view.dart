@@ -15,13 +15,13 @@ class MapView extends StatefulWidget {
 
 class _MapViewState extends State<MapView> {
   late final MapController _mapController;
-  
+
   @override
   void initState() {
     super.initState();
     _mapController = widget.mapController ?? MapController();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     const String mapApiKey = String.fromEnvironment("STADIA_MAPS_KEY");
@@ -42,11 +42,19 @@ class _MapViewState extends State<MapView> {
             urlTemplate:
                 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}@2x.png?api_key=$mapApiKey',
             userAgentPackageName: 'com.example.app',
-
+            tileProvider: NetworkTileProvider(
+              cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
+                maxCacheSize: 100_000_000,
+              ),
+            ),
             minZoom: 1,
           ),
 
-          MarkerLayer(markers: widget.markers.map((marker) => marker.get()).toList(), rotate: true, alignment: Alignment.topCenter,),
+          MarkerLayer(
+            markers: widget.markers.map((marker) => marker.get()).toList(),
+            rotate: true,
+            alignment: Alignment.topCenter,
+          ),
         ],
       );
     }

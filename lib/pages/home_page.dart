@@ -35,8 +35,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isListening = false;
   bool _isTrackingUser = false;
 
-  // TODO: Make the share button start sharing
-  bool _isSharing = true;
+  bool _isSharing = false;
   LatLng currentLocation = LatLng(12.9716, 77.5946);
   double speedMps = 0.0;
 
@@ -152,12 +151,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void startSharing() async {
+    await supabase.from('location_sharing').upsert({
+      'sender': supabase.auth.currentUser!.id,
+      'is_sharing': true,
+    }, onConflict: 'sender');
     setState(() {
       _isSharing = true;
     });
   }
 
-  void stopSharing() async {
+  Future<void> stopSharing() async {
     setState(() {
       _isSharing = false;
     });
@@ -168,12 +171,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
-  void dispose() {
+  void dispose() async {
+    await stopSharing();
     _positionStream?.cancel();
-    supabase.from('location_sharing').upsert({
-      'sender': supabase.auth.currentUser!.id,
-      'is_sharing': false,
-    }, onConflict: 'sender');
     super.dispose();
   }
 
@@ -291,8 +291,60 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
+          if (_isSharing)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      width: 180,
+                      color: ColorScheme.of(
+                        context,
+                      ).surface.withValues(alpha: 0.5),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: 6,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 4,
+                            children: [
+                              Icon(LucideIcons.mapPin300, size: 20),
+                              Text(
+                                "Sharing location",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              stopSharing();
+                            },
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: EdgeInsets.all(4),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text("Tap to stop"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           SafeArea(
             child: HomePageSheet(
+              shareLocation: startSharing,
               mapController: _mapController,
               markers: markers,
               isTracking: _isTrackingUser,
