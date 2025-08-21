@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
+import 'package:armour_app/pages/contacts.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
@@ -26,7 +27,8 @@ class HomePageSheet extends StatefulWidget {
   });
 
   final MapController? mapController;
-  final List<UserMarker> markers;
+  /*final List<UserMarker> markers;*/
+  final List<Map<String, dynamic>> markers;
   final bool isTracking;
   final VoidCallback trackUser;
   final VoidCallback shareLocation;
@@ -116,9 +118,8 @@ class _HomePageSheetState extends State<HomePageSheet>
                   googleMapsFunction: () {
                     final userLocation =
                         widget.markers
-                            .where((el) => el.isUser)
-                            .first
-                            .coordinates;
+                            .where((el) => el['isUser'])
+                            .first['coordinates'];
                     UrlLaunchHelper.checkAndLaunchUrl(
                       'geo:${userLocation.latitude},${userLocation.longitude}',
                     );
@@ -245,6 +246,26 @@ class SheetAnimation extends StatelessWidget {
                   child: HeartRateMonitor(
                     controller: controller,
                     walkingPace: walkingPace,
+                  ),
+                ),
+                Positioned(
+                  top: 100 + 100 * controller.value,
+                  left: 16,
+                  width: deviceSize.width - 32,
+                  height: 60 + 20 * controller.value,
+                  child: Card(
+                    margin: EdgeInsets.all(0),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ContactsView(),
+                          ),
+                        );
+                      },
+                      child: Center(child: Text("Manage Contacts")),
+                    ),
                   ),
                 ),
               ],

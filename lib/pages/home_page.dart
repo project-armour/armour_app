@@ -15,7 +15,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:armour_app/widgets/user_marker.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,15 +27,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
-  late List<UserMarker> markers;
   late StreamSubscription<Position>? _positionStream;
   late BluetoothDeviceProvider deviceProvider;
+  List<Map<String, dynamic>> markers = [];
 
   bool _isListening = false;
   bool _isTrackingUser = false;
 
   bool _isSharing = false;
-  LatLng currentLocation = LatLng(12.9716, 77.5946);
   double speedMps = 0.0;
 
   @override
@@ -59,6 +57,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     updateConnectedDevice();
+    createAllMarkers();
+    subscribeToLocationSharing();
+  }
+
+  void createAllMarkers() {
+    markers = [
+      {
+        'context': context,
+        'userId': supabase.auth.currentUser?.id ?? 'me',
+        'coordinates': LatLng(12.9629, 77.5775),
+        'name': 'You',
+        'isUser': true,
+        'isSharing': _isSharing,
+      },
+    ];
+
+    print("CREATING MARKERS");
+    supabase.from('location_sharing').select().then((shareList) {
+      for (var share in shareList) {
+        if (share['sender'] == supabase.auth.currentUser?.id) {
+          markers[0]['coordinates'] = LatLng(
+            share['latitude'],
+            share['longitude'],
+          );
+          continue;
+        }
+
+        setState(() {
+          markers += [
+            {
+              'context': context,
+              'userId': share['sender'],
+              'coordinates': LatLng(share['latitude'], share['longitude']),
+              'name': share['name'] ?? 'User',
+              'isUser': share['sender'] == supabase.auth.currentUser?.id,
+              'isSharing': share['is_sharing'] ?? false,
+            },
+          ];
+        });
+      }
+    });
   }
 
   // TODO: Make this proper
@@ -70,7 +109,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           schema: 'public',
           table: 'location_sharing',
           callback: (payload) {
-            print('Change received: ${payload.toString()}');
+            if (payload.newRecord['sender'] != supabase.auth.currentUser?.id) {
+              markers
+                  .where((el) => el['userId'] == payload.newRecord['sender'])
+                  .forEach((el) {
+                    setState(() {
+                      el['isSharing'] = payload.newRecord['is_sharing'];
+                      el['coordinates'] = LatLng(
+                        payload.newRecord['latitude'],
+                        payload.newRecord['longitude'],
+                      );
+                    });
+                  });
+            }
           },
         )
         .subscribe();
@@ -84,7 +135,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         (coords, speed) async {
           setState(() {
             speedMps = speed;
-            currentLocation = coords;
+            if (markers.isNotEmpty) {
+              markers[0]['coordinates'] = coords;
+            }
           });
           if (_isTrackingUser) {
             AnimateMap.move(this, _mapController, coords, destZoom: 16);
@@ -128,8 +181,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void trackUser() {
-    LatLng userLocation = markers.where((el) => el.isUser).first.coordinates;
-    AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
+    LatLng? userLocation =
+        markers.where((el) => el['isUser']).first['coordinates']!;
+    if (userLocation != null) {
+      AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
+    }
     if (!_isListening) {
       startListening();
     } else {
@@ -157,12 +213,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }, onConflict: 'sender');
     setState(() {
       _isSharing = true;
+      markers[0]['isSharing'] = true;
     });
   }
 
   Future<void> stopSharing() async {
     setState(() {
       _isSharing = false;
+      markers[0]['isSharing'] = false;
     });
     await supabase.from('location_sharing').upsert({
       'sender': supabase.auth.currentUser!.id,
@@ -172,14 +230,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() async {
-    await stopSharing();
     _positionStream?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    markers = [
+    /* markers = [
       UserMarker(
         context: context,
         coordinates: currentLocation,
@@ -201,7 +258,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         userId: "789",
         isSharing: true,
       ),
-    ];
+    ];*/
 
     return Scaffold(
       extendBodyBehindAppBar: true,

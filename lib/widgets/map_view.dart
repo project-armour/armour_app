@@ -7,7 +7,7 @@ class MapView extends StatefulWidget {
   const MapView({super.key, this.mapController, this.markers = const []});
 
   final MapController? mapController;
-  final List<UserMarker> markers;
+  final List<Map<String, dynamic>> markers;
 
   @override
   State<MapView> createState() => _MapViewState();
@@ -51,7 +51,20 @@ class _MapViewState extends State<MapView> {
           ),
 
           MarkerLayer(
-            markers: widget.markers.map((marker) => marker.get()).toList(),
+            markers:
+                widget.markers
+                    .map(
+                      (marker) => getMarker(
+                        marker['context'],
+                        marker['userId'],
+                        marker['isUser'],
+                        marker['isSharing'],
+                        marker['coordinates'],
+                        marker['name'],
+                        marker['imageUrl'],
+                      ),
+                    )
+                    .toList(),
             rotate: true,
             alignment: Alignment.topCenter,
           ),
