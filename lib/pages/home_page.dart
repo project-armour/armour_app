@@ -27,7 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
-  late StreamSubscription<Position>? _positionStream;
+  StreamSubscription<Position>? _positionStream;
   late BluetoothDeviceProvider deviceProvider;
   List<Map<String, dynamic>> markers = [];
 
@@ -57,11 +57,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     updateConnectedDevice();
-    createAllMarkers();
+    refreshMarkers();
     subscribeToLocationSharing();
   }
 
-  void createAllMarkers() {
+  void refreshMarkers() async {
     markers = [
       {
         'context': context,
@@ -73,8 +73,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     ];
 
-    print("CREATING MARKERS");
-    supabase.from('location_sharing').select().then((shareList) {
+    await supabase.from('location_sharing_with_profiles').select().then((
+      shareList,
+    ) {
       for (var share in shareList) {
         if (share['sender'] == supabase.auth.currentUser?.id) {
           markers[0]['coordinates'] = LatLng(
@@ -84,15 +85,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           continue;
         }
 
+        // select user name from profiles table based on user id
+
         setState(() {
           markers += [
             {
               'context': context,
               'userId': share['sender'],
               'coordinates': LatLng(share['latitude'], share['longitude']),
-              'name': share['name'] ?? 'User',
+              'name': share['sender_name'] ?? 'User',
               'isUser': share['sender'] == supabase.auth.currentUser?.id,
               'isSharing': share['is_sharing'] ?? false,
+              'imageUrl': share['sender_image_url'] ?? '',
             },
           ];
         });
@@ -100,27 +104,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  // TODO: Make this proper
+  // TODO: Create marker for first time share
   void subscribeToLocationSharing() {
     supabase
         .channel('location_sharing')
         .onPostgresChanges(
-          event: PostgresChangeEvent.update,
+          event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'location_sharing',
           callback: (payload) {
             if (payload.newRecord['sender'] != supabase.auth.currentUser?.id) {
-              markers
-                  .where((el) => el['userId'] == payload.newRecord['sender'])
-                  .forEach((el) {
-                    setState(() {
-                      el['isSharing'] = payload.newRecord['is_sharing'];
-                      el['coordinates'] = LatLng(
-                        payload.newRecord['latitude'],
-                        payload.newRecord['longitude'],
-                      );
-                    });
-                  });
+              var marker =
+                  markers
+                      .where(
+                        (el) => el['userId'] == payload.newRecord['sender'],
+                      )
+                      .firstOrNull;
+              if (marker != null) {
+                setState(() {
+                  marker['isSharing'] = payload.newRecord['is_sharing'];
+                  marker['coordinates'] = LatLng(
+                    payload.newRecord['latitude'],
+                    payload.newRecord['longitude'],
+                  );
+                });
+              } else {
+                refreshMarkers();
+              }
+              if (payload.oldRecord['is_sharing'] !=
+                  payload.newRecord['is_sharing']) {}
             }
           },
         )
@@ -210,6 +222,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await supabase.from('location_sharing').upsert({
       'sender': supabase.auth.currentUser!.id,
       'is_sharing': true,
+      'latitude': markers[0]['coordinates']!.latitude,
+      'longitude': markers[0]['coordinates']!.longitude,
     }, onConflict: 'sender');
     setState(() {
       _isSharing = true;
@@ -230,7 +244,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() async {
-    _positionStream?.cancel();
+    if (_positionStream != null) {
+      _positionStream?.cancel();
+    }
     super.dispose();
   }
 

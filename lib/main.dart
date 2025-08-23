@@ -3,6 +3,7 @@ import 'package:armour_app/pages/home_page.dart';
 import 'package:armour_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,11 @@ Future<void> main() async {
     url: 'https://itmoiuiugcozsppznorl.supabase.co',
     anonKey: 'sb_publishable_H5r64NixD1bYXHoYWbFuzw_sfajBybk',
   );
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp, // Allow portrait mode (upright)
+    DeviceOrientation.portraitDown, // Allow portrait mode (upside-down)
+  ]);
 
   runApp(
     ChangeNotifierProvider(
