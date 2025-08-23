@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 Future<void> main() async {
   FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
@@ -20,6 +21,14 @@ Future<void> main() async {
     DeviceOrientation.portraitDown, // Allow portrait mode (upside-down)
   ]);
 
+  // Initialize local notifications
+  const AndroidInitializationSettings androidInitSettings =
+      AndroidInitializationSettings('@mipmap/notification_icon');
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInitSettings,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => BluetoothDeviceProvider(),
@@ -29,6 +38,8 @@ Future<void> main() async {
 }
 
 final supabase = Supabase.instance.client;
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});

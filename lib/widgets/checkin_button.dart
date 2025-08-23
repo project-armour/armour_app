@@ -32,6 +32,7 @@ class CheckInButton extends StatelessWidget {
               "Check-in",
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: Theme.of(context).colorScheme.surface,
+                fontSize: 10,
               ),
             ),
           ],

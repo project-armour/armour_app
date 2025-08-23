@@ -75,19 +75,30 @@ Marker getMarker(
             ),
             color: Theme.of(context).colorScheme.surfaceBright,
           ),
-          child: ClipOval(
-            child: Icon(Icons.person, size: 24, color: Colors.grey),
+          child: CircleAvatar(
+            radius: 18,
+            backgroundImage:
+                imageUrl != null && imageUrl.isNotEmpty
+                    ? NetworkImage(imageUrl)
+                    : null,
+            backgroundColor: Theme.of(context).colorScheme.surfaceBright,
+            child:
+                imageUrl == null || imageUrl.isEmpty
+                    ? Icon(Icons.person, size: 20, color: Colors.grey)
+                    : null,
           ),
         ),
-        Container(
-          width: 2,
-          height: 20,
-          color:
-              isUser
-                  ? Colors.greenAccent
-                  : isSharing
-                  ? Colors.lightBlueAccent
-                  : Colors.grey,
+        Expanded(
+          child: Container(
+            width: 2,
+
+            color:
+                isUser
+                    ? Colors.greenAccent
+                    : isSharing
+                    ? Colors.lightBlueAccent
+                    : Colors.grey,
+          ),
         ),
       ],
     ),

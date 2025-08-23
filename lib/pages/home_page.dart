@@ -6,10 +6,12 @@ import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/main.dart';
+import 'package:armour_app/pages/profile_creation.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -37,6 +39,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _isSharing = false;
   double speedMps = 0.0;
 
+  String? selfProfilePhotoUrl;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +53,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
 
+    testProfile();
+
     startListening();
 
     deviceProvider = Provider.of<BluetoothDeviceProvider>(
@@ -59,6 +65,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     updateConnectedDevice();
     refreshMarkers();
     subscribeToLocationSharing();
+  }
+
+  void testProfile() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      final profiles = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .limit(1);
+      if (profiles.isNotEmpty && markers.isNotEmpty && mounted) {
+        setState(() {
+          selfProfilePhotoUrl = profiles[0]['profile_photo_url'];
+          markers[0]['imageUrl'] = selfProfilePhotoUrl;
+        });
+      }
+      if (profiles.isEmpty && mounted) {
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const CreateProfilePage()),
+        );
+      }
+    }
   }
 
   void refreshMarkers() async {
@@ -85,8 +113,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           continue;
         }
 
-        // select user name from profiles table based on user id
-
         setState(() {
           markers += [
             {
@@ -96,7 +122,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               'name': share['sender_name'] ?? 'User',
               'isUser': share['sender'] == supabase.auth.currentUser?.id,
               'isSharing': share['is_sharing'] ?? false,
-              'imageUrl': share['sender_image_url'] ?? '',
+              'imageUrl': share['profile_photo_url'] ?? '',
             },
           ];
         });
@@ -104,7 +130,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  // TODO: Create marker for first time share
   void subscribeToLocationSharing() {
     supabase
         .channel('location_sharing')
@@ -112,7 +137,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'location_sharing',
-          callback: (payload) {
+          callback: (payload) async {
             if (payload.newRecord['sender'] != supabase.auth.currentUser?.id) {
               var marker =
                   markers
@@ -121,6 +146,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       )
                       .firstOrNull;
               if (marker != null) {
+                if (marker['isSharing'] == false &&
+                    payload.newRecord['is_sharing'] == true) {
+                  await flutterLocalNotificationsPlugin.show(
+                    0,
+                    "Location Sharing Started",
+                    "A contact started sharing their location.",
+                    NotificationDetails(
+                      android: AndroidNotificationDetails(
+                        'default_channel_id',
+                        'General',
+                        importance: Importance.max,
+                        priority: Priority.high,
+                      ),
+                    ),
+                  );
+                } else if (marker['isSharing'] == true &&
+                    payload.newRecord['is_sharing'] == false) {
+                  // Notify the user
+                  flutterLocalNotificationsPlugin.cancel(0);
+                }
+
                 setState(() {
                   marker['isSharing'] = payload.newRecord['is_sharing'];
                   marker['coordinates'] = LatLng(
@@ -131,8 +177,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               } else {
                 refreshMarkers();
               }
-              if (payload.oldRecord['is_sharing'] !=
-                  payload.newRecord['is_sharing']) {}
             }
           },
         )
@@ -160,6 +204,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               'latitude': coords.latitude,
               'longitude': coords.longitude,
               'is_sharing': true,
+              'last_updated': DateTime.now().toIso8601String(),
             }, onConflict: 'sender');
           }
         },
@@ -169,7 +214,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }),
         },
       );
-      if (_positionStream != null) {
+      if (_positionStream != null && mounted) {
         setState(() {
           _isListening = true;
           _isTrackingUser = true;
@@ -374,40 +419,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
                       padding: EdgeInsets.all(12),
-                      width: 180,
                       color: ColorScheme.of(
                         context,
                       ).surface.withValues(alpha: 0.5),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: 6,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: 4,
-                            children: [
-                              Icon(LucideIcons.mapPin300, size: 20),
-                              Text(
-                                "Sharing location",
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ],
-                          ),
-                          FilledButton(
-                            onPressed: () {
-                              stopSharing();
-                            },
-                            style: FilledButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: EdgeInsets.all(4),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      child: IntrinsicWidth(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 6,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 4,
+                              children: [
+                                Icon(LucideIcons.mapPin300, size: 20),
+                                Text(
+                                  "Sharing location",
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ],
                             ),
-                            child: Text("Tap to stop"),
-                          ),
-                        ],
+                            FilledButton(
+                              onPressed: () {
+                                stopSharing();
+                              },
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: EdgeInsets.all(4),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text("Tap to stop"),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

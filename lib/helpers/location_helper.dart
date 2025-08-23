@@ -10,10 +10,6 @@ class LocationHelper {
   static final LocationSettings locationSettings = AndroidSettings(
     accuracy: LocationAccuracy.best,
     distanceFilter: 0,
-    foregroundNotificationConfig: ForegroundNotificationConfig(
-      notificationText: "Location in use",
-      notificationTitle: "Armour",
-    ),
   );
   static Future<bool> checkPermissions(BuildContext context) async {
     LocationPermission permission = await Geolocator.checkPermission();
