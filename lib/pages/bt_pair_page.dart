@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:armour_app/helpers/bluetooth.dart';
@@ -176,6 +175,7 @@ class _DeviceSelectionState extends State<DeviceSelection> {
 
   Future<void> startScan() async {
     final completer = Completer<void>();
+    bool isCompleted = false;
 
     // Listen for scan results
     subscription = FlutterBluePlus.onScanResults.listen((results) {
@@ -196,7 +196,10 @@ class _DeviceSelectionState extends State<DeviceSelection> {
         isScanning = false;
       });
       print('Error starting scan: $e');
-      completer.complete(); // Complete even on error
+      if (!isCompleted) {
+        completer.complete();
+        isCompleted = true;
+      }
     }
 
     scanListener = FlutterBluePlus.isScanning.listen((scanning) {
@@ -204,7 +207,10 @@ class _DeviceSelectionState extends State<DeviceSelection> {
         isScanning = scanning;
       });
       if (!scanning) {
-        completer.complete();
+        if (!isCompleted) {
+          completer.complete();
+          isCompleted = true;
+        }
         scanListener?.cancel();
       }
     });
@@ -233,7 +239,6 @@ class _DeviceSelectionState extends State<DeviceSelection> {
       context,
       listen: false,
     );
-    final device = deviceProvider.device;
 
     return RefreshIndicator(
       displacement: 20,
@@ -310,6 +315,7 @@ class _DeviceSelectionState extends State<DeviceSelection> {
     );
   }
 }
+
 /*
 class BluetoothPermissionDialog extends StatelessWidget {
   const BluetoothPermissionDialog({super.key});

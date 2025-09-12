@@ -11,6 +11,7 @@
     <!-- Foreground service for location -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- Tell Google Play Store that your app uses Bluetooth LE
      Set android:required="true" if bluetooth is necessary -->
@@ -28,7 +29,7 @@ https://developer.android.com/about/versions/12/features/bluetooth-permissions -
 
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    
+
 
     <application
         android:label="ARMOUR"
@@ -67,6 +68,11 @@ https://developer.android.com/about/versions/12/features/bluetooth-permissions -
             android:foregroundServiceType="location"
             android:exported="false">
         </service>
+
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="dataSync|remoteMessaging"
+            android:exported="false" />
 
     </application>
     <!-- Required to query activities that can process text, see:
