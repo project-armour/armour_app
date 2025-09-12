@@ -8,14 +8,37 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Check network connectivity
+  var connectivityResult = await Connectivity().checkConnectivity();
+  if (!connectivityResult.contains(ConnectivityResult.wifi) &&
+      !connectivityResult.contains(ConnectivityResult.mobile)) {
+    // No network, show error or exit
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text(
+              'No internet connection. Please connect to WiFi or mobile data.',
+            ),
+          ),
+        ),
+      ),
+    );
+    return;
+  }
+
   FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
+
   await Supabase.initialize(
     url: 'https://itmoiuiugcozsppznorl.supabase.co',
     anonKey: 'sb_publishable_H5r64NixD1bYXHoYWbFuzw_sfajBybk',
   );
-  WidgetsFlutterBinding.ensureInitialized();
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp, // Allow portrait mode (upright)
     DeviceOrientation.portraitDown, // Allow portrait mode (upside-down)
