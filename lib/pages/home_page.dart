@@ -11,6 +11,7 @@ import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
@@ -40,32 +41,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double speedMps = 0.0;
 
   String? selfProfilePhotoUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _mapController.mapEventStream.listen((event) {
-      if (event is MapEventMove &&
-          event.source != MapEventSource.mapController) {
-        setState(() {
-          _isTrackingUser = false;
-        });
-      }
-    });
-
-    testProfile();
-
-    startListening();
-
-    deviceProvider = Provider.of<BluetoothDeviceProvider>(
-      context,
-      listen: false,
-    );
-
-    updateConnectedDevice();
-    refreshMarkers();
-    subscribeToLocationSharing();
-  }
 
   void testProfile() async {
     final userId = supabase.auth.currentUser?.id;
@@ -128,6 +103,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       }
     });
+  }
+
+  void _onReceiveTaskData(Object data) async {
+    if (data is Map<String, dynamic>) {
+      final dynamic timestampMillis = data["timestampMillis"];
+      if (timestampMillis != null) {
+        print(timestampMillis);
+      }
+    }
   }
 
   void subscribeToLocationSharing() {
@@ -199,13 +183,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             AnimateMap.move(this, _mapController, coords, destZoom: 16);
           }
           if (_isSharing) {
-            await supabase.from('location_sharing').upsert({
+            FlutterForegroundTask.sendDataToTask({
               'sender': supabase.auth.currentUser!.id,
               'latitude': coords.latitude,
               'longitude': coords.longitude,
               'is_sharing': true,
               'last_updated': DateTime.now().toIso8601String(),
-            }, onConflict: 'sender');
+            });
           }
         },
         () => {
@@ -288,39 +272,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+
+    _mapController.mapEventStream.listen((event) {
+      if (event is MapEventMove &&
+          event.source != MapEventSource.mapController) {
+        setState(() {
+          _isTrackingUser = false;
+        });
+      }
+    });
+
+    testProfile();
+
+    startListening();
+
+    deviceProvider = Provider.of<BluetoothDeviceProvider>(
+      context,
+      listen: false,
+    );
+
+    updateConnectedDevice();
+    refreshMarkers();
+    subscribeToLocationSharing();
+  }
+
+  @override
   void dispose() async {
     if (_positionStream != null) {
       _positionStream?.cancel();
     }
+    FlutterForegroundTask.removeTaskDataCallback(_onReceiveTaskData);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    /* markers = [
-      UserMarker(
-        context: context,
-        coordinates: currentLocation,
-        name: "You",
-        userId: "123",
-        isUser: true,
-        isSharing: _isSharing,
-      ),
-      UserMarker(
-        context: context,
-        coordinates: LatLng(12.9816, 77.6006),
-        name: "Not sharing",
-        userId: "456",
-      ),
-      UserMarker(
-        context: context,
-        coordinates: LatLng(12.9656, 77.5846),
-        name: "Sharing Location",
-        userId: "789",
-        isSharing: true,
-      ),
-    ];*/
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: false,
