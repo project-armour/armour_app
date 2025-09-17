@@ -7,6 +7,7 @@ import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/main.dart';
+import 'package:armour_app/pages/fake_call.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/pages/profile_creation.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
@@ -301,6 +302,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (mounted && utf8.decode(value) == "trg single") {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const PanicPage()),
+                );
+              } else if (mounted && utf8.decode(value) == "trg double") {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const FakeCallScreen(),
+                  ),
                 );
               }
             });

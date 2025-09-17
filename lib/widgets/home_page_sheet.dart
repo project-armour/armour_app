@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/pages/contacts.dart';
+import 'package:armour_app/pages/fake_call.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
@@ -156,7 +157,15 @@ class _HomePageSheetState extends State<HomePageSheet>
                               SheetMainButton(
                                 text: "Fake Call",
                                 icon: LucideIcons.phoneCall,
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => const FakeCallScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                               SheetMainButton(
                                 text: "Panic",
