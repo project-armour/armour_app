@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/bt_pair_page.dart';
 import 'package:flutter/material.dart';
@@ -28,51 +26,10 @@ class _BandStatusState extends State<BandStatus> {
       connectedDevice = deviceProvider.device;
       if (connectedDevice != null) {
         isConnected = connectedDevice!.isConnected;
-
-        if (isConnected) {
-          sendHB(connectedDevice!);
-        }
       } else {
         isConnected = false;
       }
     });
-  }
-
-  void sendHB(BluetoothDevice device) async {
-    try {
-      List<BluetoothService> services = await device.discoverServices();
-
-      for (BluetoothService service in services) {
-        for (BluetoothCharacteristic characteristic
-            in service.characteristics) {
-          print("${characteristic.uuid}: ${characteristic.properties}");
-          if (characteristic.properties.notify) {
-            await characteristic.setNotifyValue(true, forceIndications: true);
-
-            // Listen for notifications
-            characteristic.onValueReceived.listen((value) {
-              print("Received Notification");
-              print("${characteristic.uuid}: ${utf8.decode(value)}");
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "${characteristic.uuid}: ${utf8.decode(value)}",
-                    ),
-                  ),
-                );
-              }
-            });
-
-            return; // Done
-          }
-        }
-      }
-
-      print("Heart Rate characteristic not found.");
-    } catch (e) {
-      print("Error in heart rate setup: $e");
-    }
   }
 
   @override

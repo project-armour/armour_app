@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:armour_app/helpers/animated_map.dart';
@@ -6,6 +7,7 @@ import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/main.dart';
+import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/pages/profile_creation.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
@@ -32,6 +34,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription<Position>? _positionStream;
   late BluetoothDeviceProvider deviceProvider;
   List<Map<String, dynamic>> markers = [];
+  BluetoothDevice? connectedDevice;
+  bool isConnected = false;
 
   bool _isListening = false;
   bool _isTrackingUser = false;
@@ -252,6 +256,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  void updateDevice() {
+    print("UPDATE DEVICE");
+    setState(() {
+      connectedDevice = deviceProvider.device;
+      if (connectedDevice != null) {
+        isConnected = connectedDevice!.isConnected;
+
+        if (isConnected) {
+          sendHB(connectedDevice!);
+        }
+      } else {
+        isConnected = false;
+      }
+    });
+  }
+
   Future<void> updateConnectedDevice() async {
     List<BluetoothDevice> connectedDevices = FlutterBluePlus.connectedDevices;
 
@@ -260,6 +280,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (device.advName == "Brick(tm)") {
         deviceProvider.setDevice(device);
       }
+    }
+  }
+
+  void sendHB(BluetoothDevice device) async {
+    try {
+      List<BluetoothService> services = await device.discoverServices();
+
+      for (BluetoothService service in services) {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
+          print("${characteristic.uuid}: ${characteristic.properties}");
+          if (characteristic.properties.notify) {
+            await characteristic.setNotifyValue(true, forceIndications: true);
+
+            // Listen for notifications
+            characteristic.onValueReceived.listen((value) {
+              print("Received Notification");
+              print("${characteristic.uuid}: ${utf8.decode(value)}");
+              if (mounted && utf8.decode(value) == "trg single") {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const PanicPage()),
+                );
+              }
+            });
+
+            return; // Done
+          }
+        }
+      }
+
+      print("Heart Rate characteristic not found.");
+    } catch (e) {
+      print("Error in heart rate setup: $e");
     }
   }
 
@@ -288,7 +341,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    deviceProvider = Provider.of<BluetoothDeviceProvider>(
+      context,
+      listen: true,
+    );
+    deviceProvider.addListener(updateDevice);
+  }
+
+  @override
   void dispose() async {
+    deviceProvider.removeListener(updateDevice);
     if (_positionStream != null) {
       _positionStream?.cancel();
     }
