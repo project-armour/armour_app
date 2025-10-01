@@ -13,6 +13,7 @@ Future<List<Map<String, dynamic>>> getContacts(String userId) async {
 
         Set<String> senderUserIds = {};
         Set<String> reveiverUserIds = {};
+
         for (var contact in contactsList) {
           if (contact['receiver'] == userId) {
             senderUserIds.add(contact['sender']);
@@ -20,6 +21,7 @@ Future<List<Map<String, dynamic>>> getContacts(String userId) async {
             reveiverUserIds.add(contact['receiver']);
           }
         }
+        Set<String> allUserIds = senderUserIds.union(reveiverUserIds);
 
         if (reveiverUserIds.isNotEmpty) {
           final profilesResponse = await supabase
@@ -37,7 +39,7 @@ Future<List<Map<String, dynamic>>> getContacts(String userId) async {
           final profilesResponse = await supabase
               .from("location_sharing_with_profiles")
               .select(
-                'id:sender, name:sender_name, profile_photo_url, is_sharing',
+                'id:sender, name:sender_name, username:sender_username, profile_photo_url, is_sharing',
               )
               .inFilter('sender', senderUserIds.toList());
           contacts.addAll(profilesResponse);
