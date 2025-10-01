@@ -95,9 +95,15 @@ class _MyAppState extends State<MyApp> {
           loginState = true;
         });
       } else {
-        setState(() {
-          loginState = false;
-        });
+        if (data.session == null) {
+          setState(() {
+            loginState = false;
+          });
+        } else {
+          setState(() {
+            loginState = true;
+          });
+        }
       }
     });
   }

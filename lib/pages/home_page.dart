@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           .limit(1);
       if (profiles.isNotEmpty && markers.isNotEmpty && mounted) {
         setState(() {
-          selfProfilePhotoUrl = profiles[0]['profile_photo_url'];
+          selfProfilePhotoUrl = profiles[0]['profile_photo_url'] ?? '';
           markers[0]['imageUrl'] = selfProfilePhotoUrl;
         });
       }

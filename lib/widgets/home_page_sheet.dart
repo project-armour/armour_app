@@ -1,15 +1,14 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
-import 'package:armour_app/pages/contacts.dart';
 import 'package:armour_app/pages/fake_call.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
+import 'package:armour_app/widgets/contacts_button.dart';
 import 'package:armour_app/widgets/heart_rate_monitor.dart';
 import 'package:armour_app/widgets/sheet_main_button.dart';
-import 'package:armour_app/widgets/user_marker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 import 'package:flutter/material.dart';
@@ -262,63 +261,13 @@ class SheetAnimation extends StatelessWidget {
                   left: 16,
                   width: deviceSize.width - 32,
                   height: 60 + 20 * controller.value,
-                  child: Card(
-                    margin: EdgeInsets.all(0),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ContactsView(),
-                          ),
-                        );
-                      },
-                      child: Center(child: Text("Manage Contacts")),
-                    ),
-                  ),
+                  child: ContactsButton(),
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-}
-
-// Add this new widget for contact items
-class _ContactItem extends StatelessWidget {
-  final String name;
-  final bool isSharing;
-
-  const _ContactItem({required this.name, this.isSharing = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.person,
-            color: isSharing ? Colors.greenAccent : Colors.grey,
-          ),
-          SizedBox(height: 8),
-          Text(name),
-          Text(
-            isSharing ? "Sharing location" : "Not sharing location",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: isSharing ? Colors.greenAccent : Colors.grey,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
