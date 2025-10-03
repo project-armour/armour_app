@@ -1,3 +1,4 @@
+import 'package:armour_app/helpers/bg_service.dart';
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/pages/home_page.dart';
 import 'package:armour_app/pages/login_page.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -38,6 +40,8 @@ Future<void> main() async {
     url: 'https://itmoiuiugcozsppznorl.supabase.co',
     anonKey: 'sb_publishable_H5r64NixD1bYXHoYWbFuzw_sfajBybk',
   );
+
+  FlutterForegroundTask.initCommunicationPort();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp, // Allow portrait mode (upright)
@@ -79,35 +83,58 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     _setupAuthListener();
+    ForegroundServiceHelper.initForegroundService();
     super.initState();
   }
 
   void _setupAuthListener() {
     supabase.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
+
+      /* Already signed in */
       if (event == AuthChangeEvent.initialSession) {
         setState(() {
           loginState = data.session != null;
         });
         if (data.session != null) {
           supabase.auth.startAutoRefresh();
+          FlutterForegroundTask.sendDataToTask({
+            'loginStatus': true,
+            'refreshToken': data.session?.refreshToken,
+          });
         }
-      } else if (event == AuthChangeEvent.signedIn) {
+      }
+      /* Sign in event */
+      else if (event == AuthChangeEvent.signedIn) {
         setState(() {
           loginState = true;
         });
         supabase.auth.startAutoRefresh();
-      } else {
+        FlutterForegroundTask.sendDataToTask({
+          'loginStatus': true,
+          'refreshToken': data.session?.refreshToken,
+        });
+      }
+      /* Other events */
+      else {
         if (data.session == null) {
           setState(() {
             loginState = false;
           });
           supabase.auth.stopAutoRefresh();
+          FlutterForegroundTask.sendDataToTask({
+            'loginStatus': false,
+            'refreshToken': null,
+          });
         } else {
           setState(() {
             loginState = true;
           });
           supabase.auth.startAutoRefresh();
+          FlutterForegroundTask.sendDataToTask({
+            'loginStatus': true,
+            'refreshToken': data.session?.refreshToken,
+          });
         }
       }
     });

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:armour_app/helpers/animated_map.dart';
+import 'package:armour_app/helpers/bg_service.dart';
 import 'package:armour_app/helpers/bluetooth.dart';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
@@ -14,9 +15,9 @@ import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -32,14 +33,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
-  StreamSubscription<Position>? _positionStream;
   late BluetoothDeviceProvider deviceProvider;
   List<Map<String, dynamic>> markers = [];
   BluetoothDevice? connectedDevice;
   bool isConnected = false;
 
-  bool _isListening = false;
-  bool _isTrackingUser = false;
+  bool _isTrackingUser = true;
 
   bool _isSharing = false;
   double speedMps = 0.0;
@@ -188,55 +187,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         .subscribe();
   }
 
+  void onReceiveData(Object data) {
+    if (data is Map<String, dynamic>) {
+      print("Received data from task: $data");
+      if (data.containsKey("location_info")) {
+        final LatLng coords = LatLng(
+          data['location_info']['latitude'],
+          data['location_info']['longitude'],
+        );
+        final double speed = data['location_info']['speed'];
+        setState(() {
+          speedMps = speed;
+          if (markers.isNotEmpty) {
+            markers[0]['coordinates'] = coords;
+          }
+        });
+        if (_isTrackingUser) {
+          AnimateMap.move(this, _mapController, coords, destZoom: 16);
+        }
+      }
+    }
+  }
+
   void startListening() async {
     bool locationPermission = await LocationHelper.checkPermissions(context);
 
     if (locationPermission) {
-      _positionStream = await LocationHelper.startListening(
-        (coords, speed) async {
-          setState(() {
-            speedMps = speed;
-            if (markers.isNotEmpty) {
-              markers[0]['coordinates'] = coords;
-            }
-          });
-          if (_isTrackingUser) {
-            AnimateMap.move(this, _mapController, coords, destZoom: 16);
-          }
-          if (_isSharing) {
-            await supabase.from('location_sharing').upsert({
-              'sender': supabase.auth.currentUser!.id,
-              'latitude': coords.latitude,
-              'longitude': coords.longitude,
-              'is_sharing': true,
-              'last_updated': DateTime.now().toIso8601String(),
-            }, onConflict: 'sender');
-          }
-        },
-        () => {
-          setState(() {
-            _isListening = false;
-          }),
-        },
-      );
-      if (_positionStream != null && mounted) {
-        setState(() {
-          _isListening = true;
-          _isTrackingUser = true;
-        });
-      } else {
-        if (mounted) {
-          // TODO: Start listening again after the user enables location services
-          LocationHelper.requestLocationService(context);
-        }
-        setState(() {
-          _isListening = false;
-          _isTrackingUser = false;
-        });
-      }
+      ForegroundServiceHelper.startService();
+      FlutterForegroundTask.addTaskDataCallback(onReceiveData);
     } else {
       setState(() {
-        _isListening = false;
         _isTrackingUser = false;
       });
     }
@@ -248,13 +228,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (userLocation != null) {
       AnimateMap.move(this, _mapController, userLocation, destZoom: 16);
     }
-    if (!_isListening) {
-      startListening();
-    } else {
-      setState(() {
-        _isTrackingUser = true;
-      });
-    }
+    setState(() {
+      _isTrackingUser = true;
+    });
   }
 
   void updateDevice() {
@@ -330,6 +306,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       'latitude': markers[0]['coordinates']!.latitude,
       'longitude': markers[0]['coordinates']!.longitude,
     }, onConflict: 'sender');
+    FlutterForegroundTask.sendDataToTask({'is_sharing': true});
     setState(() {
       _isSharing = true;
       markers[0]['isSharing'] = true;
@@ -341,6 +318,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _isSharing = false;
       markers[0]['isSharing'] = false;
     });
+    FlutterForegroundTask.sendDataToTask({'is_sharing': false});
     await supabase.from('location_sharing').upsert({
       'sender': supabase.auth.currentUser!.id,
       'is_sharing': false,
@@ -361,9 +339,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() async {
     deviceProvider.removeListener(updateDevice);
-    if (_positionStream != null) {
-      _positionStream?.cancel();
-    }
+    FlutterForegroundTask.removeTaskDataCallback(onReceiveData);
     super.dispose();
   }
 

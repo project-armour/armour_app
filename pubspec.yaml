@@ -51,6 +51,7 @@ dependencies:
   connectivity_plus: ^6.0.3
   audio_session: ^0.2.2
   just_audio: ^0.10.5
+  flutter_foreground_task: ^9.1.0
 
 
 dev_dependencies:
