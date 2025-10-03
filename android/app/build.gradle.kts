@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.armour_app"
+    namespace = "com.project_armour.armour_app"
     compileSdk = 35
 
     compileOptions {
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.armour_app"
+        applicationId = "com.project_armour.armour_app"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

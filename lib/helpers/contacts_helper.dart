@@ -21,7 +21,6 @@ Future<List<Map<String, dynamic>>> getContacts(String userId) async {
             reveiverUserIds.add(contact['receiver']);
           }
         }
-        Set<String> allUserIds = senderUserIds.union(reveiverUserIds);
 
         if (reveiverUserIds.isNotEmpty) {
           final profilesResponse = await supabase

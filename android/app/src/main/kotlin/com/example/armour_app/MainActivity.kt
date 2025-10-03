@@ -1,4 +1,4 @@
-package com.example.armour_app
+package com.project_armour.armour_app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -369,30 +369,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    /* markers = [
-      UserMarker(
-        context: context,
-        coordinates: currentLocation,
-        name: "You",
-        userId: "123",
-        isUser: true,
-        isSharing: _isSharing,
-      ),
-      UserMarker(
-        context: context,
-        coordinates: LatLng(12.9816, 77.6006),
-        name: "Not sharing",
-        userId: "456",
-      ),
-      UserMarker(
-        context: context,
-        coordinates: LatLng(12.9656, 77.5846),
-        name: "Sharing Location",
-        userId: "789",
-        isSharing: true,
-      ),
-    ];*/
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: false,

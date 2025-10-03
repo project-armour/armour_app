@@ -74,7 +74,6 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Color primaryColor = const Color(0xFF2AB7F1);
   final ThemeMode _themeMode = ThemeMode.dark;
-
   bool loginState = false;
 
   @override
@@ -84,25 +83,31 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _setupAuthListener() {
-    supabase.auth.onAuthStateChange.listen((data) {
+    supabase.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
       if (event == AuthChangeEvent.initialSession) {
         setState(() {
           loginState = data.session != null;
         });
+        if (data.session != null) {
+          supabase.auth.startAutoRefresh();
+        }
       } else if (event == AuthChangeEvent.signedIn) {
         setState(() {
           loginState = true;
         });
+        supabase.auth.startAutoRefresh();
       } else {
         if (data.session == null) {
           setState(() {
             loginState = false;
           });
+          supabase.auth.stopAutoRefresh();
         } else {
           setState(() {
             loginState = true;
           });
+          supabase.auth.startAutoRefresh();
         }
       }
     });

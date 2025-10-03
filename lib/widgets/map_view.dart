@@ -41,7 +41,7 @@ class _MapViewState extends State<MapView> {
           TileLayer(
             urlTemplate:
                 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}@2x.png?api_key=$mapApiKey',
-            userAgentPackageName: 'com.example.app',
+            userAgentPackageName: 'com.project_armour.armour_app',
             tileProvider: NetworkTileProvider(
               cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
                 maxCacheSize: 100_000_000,
