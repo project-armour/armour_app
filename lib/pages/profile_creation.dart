@@ -12,30 +12,79 @@ class CreateProfilePage extends StatefulWidget {
 
 class _CreateProfilePageState extends State<CreateProfilePage> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _photoUrlController = TextEditingController();
   bool _photoError = false;
   String? nameError;
+  String? usernameError;
+  final RegExp _usernameRegex = RegExp(r'^[a-zA-Z_]+$');
 
   void submitProfile() async {
-    nameError = null;
+    setState(() {
+      nameError = null;
+      usernameError = null;
+    });
+
     if (_nameController.text.isEmpty) {
-      nameError = "Name cannot be empty";
+      setState(() {
+        nameError = "Display name cannot be empty";
+      });
       return;
     }
-    if (nameError == null && !_photoError) {
-      var data =
-          await supabase.from('profiles').upsert({
-            'id': supabase.auth.currentUser?.id,
-            'name': _nameController.text,
-            'profile_photo_url':
-                _photoUrlController.text.isEmpty
-                    ? null
-                    : _photoUrlController.text,
-          }).select();
-      if (data.isNotEmpty && mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+
+    if (_usernameController.text.isEmpty) {
+      setState(() {
+        usernameError = "Username cannot be empty";
+      });
+      return;
+    }
+
+    if (!_usernameRegex.hasMatch(_usernameController.text)) {
+      setState(() {
+        usernameError = "Username can only contain letters and underscore";
+      });
+      return;
+    }
+
+    if (_usernameController.text.length < 4 ||
+        _usernameController.text.length > 32) {
+      setState(() {
+        usernameError = "Username must be between 4 and 32 characters";
+      });
+      return;
+    }
+
+    if (nameError == null && usernameError == null && !_photoError) {
+      try {
+        var data =
+            await supabase.from('profiles').upsert({
+              'id': supabase.auth.currentUser?.id,
+              'name': _nameController.text,
+              'username': _usernameController.text,
+              'profile_photo_url':
+                  _photoUrlController.text.isEmpty
+                      ? null
+                      : _photoUrlController.text,
+            }).select();
+
+        if (data.isNotEmpty && mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
+      } catch (e) {
+        if (e.toString().contains("profiles_username_key") ||
+            e.toString().contains("duplicate key value")) {
+          setState(() {
+            usernameError =
+                "Username already taken. Please choose another one.";
+          });
+        } else {
+          // Handle other errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("An error occurred: ${e.toString()}")),
+          );
+        }
       }
     }
   }
@@ -112,12 +161,49 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                 ],
               ),
             ),
-
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: "Username",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                errorText: usernameError,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  usernameError = null;
+                });
+                if (value.isEmpty) {
+                  setState(() {
+                    usernameError = "Username cannot be empty";
+                  });
+                } else if (!_usernameRegex.hasMatch(value)) {
+                  setState(() {
+                    usernameError =
+                        "Username can only contain letters and underscore";
+                  });
+                } else if (value.length < 4 || value.length > 32) {
+                  setState(() {
+                    usernameError =
+                        "Username must be between 4 and 32 characters";
+                  });
+                }
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0, left: 12.0),
+              child: Text(
+                "Username can only contain letters (a-z, A-Z) and underscore (_), and must be between 4-32 characters",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: "Name",
+                labelText: "Display name",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -129,12 +215,12 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                 });
                 if (value.isEmpty) {
                   setState(() {
-                    nameError = "Name cannot be empty";
+                    nameError = "Display name cannot be empty";
                   });
                 }
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             TextField(
               controller: _photoUrlController,
               decoration: InputDecoration(
@@ -163,6 +249,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _photoUrlController.dispose();
     super.dispose();
   }

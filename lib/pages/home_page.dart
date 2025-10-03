@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       {
         'context': context,
         'userId': supabase.auth.currentUser?.id ?? 'me',
-        'coordinates': LatLng(12.9629, 77.5775),
+        'coordinates': LatLng(0, 0),
         'name': 'You',
         'isUser': true,
         'isSharing': _isSharing,
@@ -111,8 +111,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       for (var share in shareList) {
         if (share['sender'] == supabase.auth.currentUser?.id) {
           markers[0]['coordinates'] = LatLng(
-            share['latitude'],
-            share['longitude'],
+            share['latitude'] ?? 0,
+            share['longitude'] ?? 0,
           );
           continue;
         }
@@ -122,7 +122,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             {
               'context': context,
               'userId': share['sender'],
-              'coordinates': LatLng(share['latitude'], share['longitude']),
+              'coordinates': LatLng(
+                share['latitude'] ?? 0,
+                share['longitude'] ?? 0,
+              ),
               'name': share['sender_name'] ?? 'User',
               'isUser': share['sender'] == supabase.auth.currentUser?.id,
               'isSharing': share['is_sharing'] ?? false,
@@ -190,6 +193,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void onReceiveData(Object data) {
     if (data is Map<String, dynamic>) {
       print("Received data from task: $data");
+      if (data.containsKey("is_sharing")) {
+        setState(() {
+          _isSharing = data["is_sharing"];
+        });
+      }
       if (data.containsKey("location_info")) {
         final LatLng coords = LatLng(
           data['location_info']['latitude'],

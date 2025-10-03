@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:armour_app/helpers/location_helper.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Global variable to store user data that can be accessed by the task handler
@@ -65,8 +64,17 @@ class FgTaskHandler extends TaskHandler {
 
   @override
   Future<void> onDestroy(DateTime? timestamp, bool? isRepeating) async {
+    if (_positionStream != null) {
+      await _positionStream!.cancel();
+    }
+    isSharing = false;
+    FlutterForegroundTask.sendDataToMain({'is_sharing': false});
     if (supabase != null) {
-      supabase!.auth.stopAutoRefresh();
+      await supabase?.from('location_sharing').upsert({
+        'sender': supabase?.auth.currentUser?.id,
+        'is_sharing': false,
+      }, onConflict: 'sender');
+      supabase?.auth.stopAutoRefresh();
     }
   }
 
@@ -76,21 +84,33 @@ class FgTaskHandler extends TaskHandler {
     if (data is Map<String, dynamic>) {
       if (data.containsKey('loginStatus')) {
         isLoggedIn = data['loginStatus'];
-        if (!isLoggedIn) {
-          supabase!.auth.stopAutoRefresh();
+        if (!isLoggedIn && supabase != null) {
+          supabase?.auth.stopAutoRefresh();
         }
       }
       if (data.containsKey('refreshToken')) {
         _refreshToken = data['refreshToken'];
         if (_refreshToken != null) {
-          await supabase!.auth.setSession(_refreshToken!);
-          supabase!.auth.startAutoRefresh();
+          await supabase?.auth.setSession(_refreshToken!);
+          supabase?.auth.startAutoRefresh();
         } else {
-          supabase!.auth.stopAutoRefresh();
+          supabase?.auth.stopAutoRefresh();
         }
       }
       if (data.containsKey('is_sharing')) {
         isSharing = data['is_sharing'];
+        if (isSharing) {
+          FlutterForegroundTask.updateService(
+            notificationTitle: 'ARMOUR is sharing your location',
+            notificationButtons: [
+              const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
+              const NotificationButton(
+                id: 'btn_stopshare',
+                text: 'Stop Sharing',
+              ),
+            ],
+          );
+        }
       }
     }
   }
@@ -99,8 +119,24 @@ class FgTaskHandler extends TaskHandler {
   void onRepeatEvent(DateTime timestamp) {}
 
   @override
+  void onNotificationButtonPressed(String id) {
+    if (id == 'btn_stop') {
+      ForegroundServiceHelper.stopService();
+    }
+    if (id == 'btn_stopshare') {
+      isSharing = false;
+      FlutterForegroundTask.sendDataToMain({'is_sharing': false});
+      FlutterForegroundTask.updateService(
+        notificationTitle: 'ARMOUR is active in the background',
+        notificationButtons: [
+          const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
+        ],
+      );
+    }
+  }
+
+  @override
   void onNotificationPressed() {
-    // Notification was pressed - you can navigate to a specific page if needed
     FlutterForegroundTask.launchApp();
   }
 }
@@ -142,6 +178,9 @@ class ForegroundServiceHelper {
         notificationIcon: NotificationIcon(
           metaDataName: 'com.project_armour.service.NOTIFICATION_ICON',
         ),
+        notificationButtons: [
+          const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
+        ],
         callback: _taskCallback,
       );
     }
