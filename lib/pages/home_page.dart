@@ -58,7 +58,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     testProfile();
-
     startListening();
 
     deviceProvider = Provider.of<BluetoothDeviceProvider>(
@@ -94,7 +93,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void refreshMarkers() async {
-    markers = [
+    var newMarkers = [
       {
         'context': context,
         'userId': supabase.auth.currentUser?.id ?? 'me',
@@ -110,31 +109,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ) {
       for (var share in shareList) {
         if (share['sender'] == supabase.auth.currentUser?.id) {
-          markers[0]['coordinates'] = LatLng(
+          newMarkers[0]['coordinates'] = LatLng(
             share['latitude'] ?? 0,
             share['longitude'] ?? 0,
           );
           continue;
         }
 
-        setState(() {
-          markers += [
-            {
-              'context': context,
-              'userId': share['sender'],
-              'coordinates': LatLng(
-                share['latitude'] ?? 0,
-                share['longitude'] ?? 0,
-              ),
-              'name': share['sender_name'] ?? 'User',
-              'isUser': share['sender'] == supabase.auth.currentUser?.id,
-              'isSharing': share['is_sharing'] ?? false,
-              'imageUrl': share['profile_photo_url'] ?? '',
-            },
-          ];
-        });
+        newMarkers += [
+          {
+            'context': context,
+            'userId': share['sender'],
+            'coordinates': LatLng(
+              share['latitude'] ?? 0,
+              share['longitude'] ?? 0,
+            ),
+            'name': share['sender_name'] ?? 'User',
+            'isUser': share['sender'] == supabase.auth.currentUser?.id,
+            'isSharing': share['is_sharing'] ?? false,
+            'imageUrl': share['profile_photo_url'] ?? '',
+          },
+        ];
       }
+
+      setState(() {
+        markers = newMarkers;
+      });
     });
+  }
+
+  void startListening() async {
+    bool locationPermission = await LocationHelper.checkPermissions(context);
+    bool notificationPermission = false;
+    if (mounted) {
+      notificationPermission =
+          await ForegroundServiceHelper.requestNotificationPermission(context);
+    }
+
+    if (locationPermission && notificationPermission) {
+      ForegroundServiceHelper.startService();
+      FlutterForegroundTask.addTaskDataCallback(onReceiveData);
+    } else {
+      setState(() {
+        _isTrackingUser = false;
+      });
+    }
   }
 
   void subscribeToLocationSharing() {
@@ -153,7 +172,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       )
                       .firstOrNull;
               if (marker != null) {
-                if (marker['isSharing'] == false &&
+                /*if (marker['isSharing'] == false &&
                     payload.newRecord['is_sharing'] == true) {
                   await flutterLocalNotificationsPlugin.show(
                     0,
@@ -172,7 +191,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     payload.newRecord['is_sharing'] == false) {
                   // Notify the user
                   flutterLocalNotificationsPlugin.cancel(0);
-                }
+                }*/
 
                 setState(() {
                   marker['isSharing'] = payload.newRecord['is_sharing'];
@@ -192,10 +211,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void onReceiveData(Object data) {
     if (data is Map<String, dynamic>) {
-      print("Received data from task: $data");
       if (data.containsKey("is_sharing")) {
         setState(() {
           _isSharing = data["is_sharing"];
+          if (markers.isNotEmpty) {
+            markers[0]['isSharing'] = _isSharing;
+          }
         });
       }
       if (data.containsKey("location_info")) {
@@ -214,19 +235,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           AnimateMap.move(this, _mapController, coords, destZoom: 16);
         }
       }
-    }
-  }
-
-  void startListening() async {
-    bool locationPermission = await LocationHelper.checkPermissions(context);
-
-    if (locationPermission) {
-      ForegroundServiceHelper.startService();
-      FlutterForegroundTask.addTaskDataCallback(onReceiveData);
-    } else {
-      setState(() {
-        _isTrackingUser = false;
-      });
     }
   }
 
