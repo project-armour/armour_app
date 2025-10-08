@@ -1,6 +1,7 @@
 import 'package:armour_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:intl/intl.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -96,7 +97,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 title: Text(
                   notificationTitleMap[notif['type']] ?? 'Notification',
                 ),
-                subtitle: Text(notif['message'] ?? ''),
+                leading: Icon(
+                  notificationIconMap[notif['type']] ?? LucideIcons.bell,
+                ),
+                subtitle:
+                    notif['message'] != null ? Text(notif['message']) : null,
+                trailing: Text(
+                  DateFormat(
+                    'd/M/yy\nHH:mm',
+                  ).format(DateTime.parse(notif['created_at']).toLocal()),
+                  textAlign: TextAlign.end,
+                  style: TextTheme.of(context).labelSmall,
+                ),
               ),
             );
           },

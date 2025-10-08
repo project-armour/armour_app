@@ -7,6 +7,7 @@ import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -72,6 +73,12 @@ final notificationTitleMap = {
   'location_sharing_started': 'Location Sharing Started',
   'location_sharing_ended': 'Location Sharing Ended',
   'contact_request': 'Contact Request',
+};
+
+final notificationIconMap = {
+  'location_sharing_started': LucideIcons.mapPin,
+  'location_sharing_ended': LucideIcons.mapPin,
+  'contact_request': LucideIcons.user,
 };
 
 class MyApp extends StatefulWidget {

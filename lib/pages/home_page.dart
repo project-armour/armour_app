@@ -374,13 +374,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           "assets/images/gradient-wordmark.svg",
           height: 24,
         ),
+        leading: IconButton(
+          onPressed: () {
+            supabase.auth.signOut();
+          },
+          icon: Icon(LucideIcons.logOut),
+        ),
         actions: [
-          IconButton(
-            onPressed: () {
-              supabase.auth.signOut();
-            },
-            icon: Icon(LucideIcons.logOut),
-          ),
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
