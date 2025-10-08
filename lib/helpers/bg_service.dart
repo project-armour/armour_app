@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:armour_app/helpers/location_helper.dart';
+import 'package:armour_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -26,6 +28,19 @@ class FgTaskHandler extends TaskHandler {
   bool isLoggedIn = false;
   bool isSharing = false;
   StreamSubscription<Position>? _positionStream;
+  FlutterLocalNotificationsPlugin notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  late RealtimeChannel? notificationsChannel;
+
+  final NotificationDetails notificationDetails = const NotificationDetails(
+    android: AndroidNotificationDetails(
+      'armour_fg',
+      'Foreground Service Channel',
+      channelDescription: 'Channel for foreground service notifications',
+      priority: Priority.high,
+    ),
+  );
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter taskStarter) async {
@@ -63,6 +78,7 @@ class FgTaskHandler extends TaskHandler {
       }
     }, () => {print("Error in starting location stream")});
 
+    subscribeToNotifications();
     print("Started Foreground Service");
   }
 
@@ -72,15 +88,11 @@ class FgTaskHandler extends TaskHandler {
     if (_positionStream != null) {
       await _positionStream!.cancel();
     }
-    isSharing = false;
-    FlutterForegroundTask.sendDataToMain({'is_sharing': false});
-    if (supabase != null) {
-      await supabase?.from('location_sharing').upsert({
-        'sender': supabase?.auth.currentUser?.id,
-        'is_sharing': false,
-      }, onConflict: 'sender');
-      supabase?.auth.stopAutoRefresh();
+    if (notificationsChannel != null) {
+      notificationsChannel!.unsubscribe();
     }
+    stopSharing();
+    FlutterForegroundTask.sendDataToMain({'is_sharing': false});
   }
 
   @override
@@ -103,26 +115,102 @@ class FgTaskHandler extends TaskHandler {
         }
       }
       if (data.containsKey('is_sharing')) {
-        if (isSharing = data['is_sharing']) {
-          FlutterForegroundTask.updateService(
-            notificationTitle: 'ARMOUR is sharing your location',
-            notificationButtons: [
-              const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
-              const NotificationButton(
-                id: 'btn_stopshare',
-                text: 'Stop Sharing',
-              ),
-            ],
-          );
+        if (data['is_sharing']) {
+          startSharing();
         } else {
-          FlutterForegroundTask.updateService(
-            notificationTitle: 'ARMOUR is active in the background',
-            notificationButtons: [
-              const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
-            ],
+          stopSharing();
+        }
+      }
+    }
+  }
+
+  void startSharing() async {
+    isSharing = true;
+
+    if (supabase != null) {
+      // get my own name from profiels table
+      final myProfile =
+          await supabase
+              ?.from('profiles')
+              .select()
+              .eq('id', supabase?.auth.currentUser?.id as Object)
+              .single();
+      final myName = myProfile?['name'] as String? ?? 'User';
+
+      await supabase?.from('notifications').insert({
+        'sender': supabase?.auth.currentUser?.id,
+        'priority': 'high',
+        'type': 'location_sharing_started',
+        'message':
+            '$myName has started sharing their location, tap to view their location on the map',
+      });
+      supabase?.auth.stopAutoRefresh();
+    }
+
+    FlutterForegroundTask.sendDataToMain({'is_sharing': true});
+    FlutterForegroundTask.updateService(
+      notificationTitle: 'ARMOUR is sharing your location',
+      notificationButtons: [
+        const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
+        const NotificationButton(id: 'btn_stopshare', text: 'Stop Sharing'),
+      ],
+    );
+  }
+
+  void stopSharing() async {
+    isSharing = false;
+
+    if (supabase != null) {
+      await supabase?.from('location_sharing').upsert({
+        'sender': supabase?.auth.currentUser?.id,
+        'is_sharing': false,
+      }, onConflict: 'sender');
+      supabase?.auth.stopAutoRefresh();
+    }
+    FlutterForegroundTask.sendDataToMain({'is_sharing': false});
+    FlutterForegroundTask.updateService(
+      notificationTitle: 'ARMOUR is active in the background',
+      notificationButtons: [
+        const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
+      ],
+    );
+  }
+
+  void subscribeToNotifications() async {
+    void handleNotification(PostgresChangePayload payload) {
+      if (payload.newRecord['type'] == 'location_sharing_started') {
+        notificationsPlugin.show(
+          payload.newRecord['id'],
+          'Location Sharing Started',
+          payload.newRecord['message'],
+          notificationDetails,
+        );
+      } else if (payload.newRecord['type'] == 'contact_request') {
+        if (notificationTitleMap.containsKey(payload.newRecord['type'])) {
+          notificationsPlugin.show(
+            payload.newRecord['id'],
+            notificationTitleMap[payload.newRecord['type']],
+            payload.newRecord['message'],
+            notificationDetails,
           );
         }
       }
+    }
+
+    if (supabase != null) {
+      notificationsChannel = supabase
+          ?.channel('notifications')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'notifications',
+            callback: handleNotification,
+          )
+          .subscribe((status, obj) {
+            if (status == RealtimeSubscribeStatus.subscribed) {
+              print("Subscribed to notifications channel");
+            }
+          });
     }
   }
 
@@ -135,14 +223,7 @@ class FgTaskHandler extends TaskHandler {
       FlutterForegroundTask.stopService();
     }
     if (id == 'btn_stopshare') {
-      isSharing = false;
-      FlutterForegroundTask.sendDataToMain({'is_sharing': false});
-      FlutterForegroundTask.updateService(
-        notificationTitle: 'ARMOUR is active in the background',
-        notificationButtons: [
-          const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
-        ],
-      );
+      stopSharing();
     }
   }
 
@@ -175,7 +256,9 @@ class ForegroundServiceHelper {
     );
   }
 
-  static Future<ServiceRequestResult> startService() async {
+  static Future<ServiceRequestResult> startService([
+    bool withConnectedDevice = false,
+  ]) async {
     if (await FlutterForegroundTask.isRunningService) {
       return FlutterForegroundTask.restartService();
     } else {
@@ -183,7 +266,7 @@ class ForegroundServiceHelper {
         serviceTypes: [
           ForegroundServiceTypes.dataSync,
           ForegroundServiceTypes.location,
-          ForegroundServiceTypes.connectedDevice,
+          if (withConnectedDevice) ForegroundServiceTypes.connectedDevice,
         ],
         notificationTitle: 'ARMOUR is active in the background',
         notificationText: 'Tap here to return to the app',

@@ -9,6 +9,7 @@ import 'package:armour_app/helpers/location_helper.dart';
 import 'package:armour_app/helpers/url_launch_helper.dart';
 import 'package:armour_app/main.dart';
 import 'package:armour_app/pages/fake_call.dart';
+import 'package:armour_app/pages/notifications.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/pages/profile_creation.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
@@ -16,7 +17,6 @@ import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -257,7 +257,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         isConnected = connectedDevice!.isConnected;
 
         if (isConnected) {
-          sendHB(connectedDevice!);
+          btSubscribe(connectedDevice!);
         }
       } else {
         isConnected = false;
@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void sendHB(BluetoothDevice device) async {
+  void btSubscribe(BluetoothDevice device) async {
     try {
       List<BluetoothService> services = await device.discoverServices();
 
@@ -291,11 +291,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             characteristic.onValueReceived.listen((value) {
               print("Received Notification");
               print("${characteristic.uuid}: ${utf8.decode(value)}");
-              if (mounted && utf8.decode(value) == "trg single") {
+              if (mounted && utf8.decode(value) == "trg \$single") {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const PanicPage()),
                 );
-              } else if (mounted && utf8.decode(value) == "trg double") {
+              } else if (mounted && utf8.decode(value) == "trg \$long") {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const FakeCallScreen(),
@@ -380,6 +380,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               supabase.auth.signOut();
             },
             icon: Icon(LucideIcons.logOut),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+            },
+            icon: Icon(LucideIcons.bell),
           ),
         ],
         flexibleSpace: ClipRRect(

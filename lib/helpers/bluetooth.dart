@@ -12,7 +12,7 @@ class BluetoothDeviceProvider with ChangeNotifier {
 
   void setDevice(BluetoothDevice device) {
     _device = device;
-          notifyListeners();
+    notifyListeners();
     subscribe();
   }
 

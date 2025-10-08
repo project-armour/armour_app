@@ -68,6 +68,12 @@ final supabase = Supabase.instance.client;
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+final notificationTitleMap = {
+  'location_sharing_started': 'Location Sharing Started',
+  'location_sharing_ended': 'Location Sharing Ended',
+  'contact_request': 'Contact Request',
+};
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 

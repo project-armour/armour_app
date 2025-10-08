@@ -1,0 +1,107 @@
+import 'package:armour_app/main.dart';
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+class NotificationsPage extends StatefulWidget {
+  const NotificationsPage({super.key});
+
+  @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage> {
+  List<Map<String, dynamic>> notifications = [];
+
+  Future<void> getNotifications() async {
+    final notifs = await supabase.from('notifications_with_profiles').select();
+    setState(() {
+      notifications = notifs;
+    });
+  }
+
+  @override
+  void initState() {
+    getNotifications();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notifications')),
+      body: RefreshIndicator(
+        onRefresh: getNotifications,
+        child: ListView.builder(
+          itemCount: notifications.length,
+          itemBuilder: (context, index) {
+            final notif = notifications[index];
+            return Dismissible(
+              key: Key(notif['id'].toString()),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: Colors.redAccent.withValues(alpha: 0.25),
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Icon(LucideIcons.trash, color: Colors.redAccent),
+              ),
+              confirmDismiss: (direction) async {
+                return await showDialog(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        backgroundColor:
+                            ColorScheme.of(context).surfaceContainerLow,
+                        title: const Text('Delete Notification'),
+                        content: const Text(
+                          'Are you sure you want to delete this notification?',
+                        ),
+                        actions: [
+                          FilledButton.tonal(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: ColorScheme.of(
+                                context,
+                              ).primaryContainer.withValues(alpha: 0.25),
+                              foregroundColor:
+                                  ColorScheme.of(context).onPrimaryContainer,
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton.tonal(
+                            onPressed: () => Navigator.of(context).pop(true),
+
+                            style: FilledButton.styleFrom(
+                              backgroundColor: ColorScheme.of(
+                                context,
+                              ).errorContainer.withValues(alpha: 0.25),
+                              foregroundColor:
+                                  ColorScheme.of(context).onErrorContainer,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                );
+              },
+              onDismissed: (direction) async {
+                await supabase
+                    .from('notifications')
+                    .delete()
+                    .eq('id', notif['id']);
+                setState(() {
+                  notifications.removeAt(index);
+                });
+              },
+              child: ListTile(
+                title: Text(
+                  notificationTitleMap[notif['type']] ?? 'Notification',
+                ),
+                subtitle: Text(notif['message'] ?? ''),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
