@@ -2,33 +2,78 @@ import 'package:armour_app/helpers/contacts_helper.dart';
 import 'package:armour_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
-class ContactsView extends StatefulWidget {
-  const ContactsView({super.key});
+class ContactsPage extends StatefulWidget {
+  const ContactsPage({super.key});
 
   @override
-  State<ContactsView> createState() => _ContactsViewState();
+  State<ContactsPage> createState() => _ContactsPageState();
 }
 
-class _ContactsViewState extends State<ContactsView>
+class _ContactsPageState extends State<ContactsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   List<Map<String, dynamic>> contacts = [];
+  List<Map<String, dynamic>> requests = [];
+  List<Map<String, dynamic>> sentRequests = [];
+  Map<String, dynamic> myProfile = {};
+
+  bool showAddButton = false;
+
+  void getProfile() async {
+    final profile =
+        await supabase
+            .from('profiles')
+            .select()
+            .eq('id', supabase.auth.currentUser?.id as String)
+            .single();
+    setState(() {
+      myProfile = profile;
+    });
+  }
+
+  void updateAddContactButton() {
+    setState(() {
+      showAddButton = _tabController.index == 2;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    getContacts(supabase.auth.currentUser!.id).then((value) {
+    getProfile();
+    getContacts(supabase.auth.currentUser!.id, ContactsQueryType.accepted).then(
+      (value) {
+        setState(() {
+          contacts = value;
+        });
+      },
+    );
+    getContacts(
+      supabase.auth.currentUser!.id,
+      ContactsQueryType.recievedRequests,
+    ).then((value) {
       setState(() {
-        contacts = value;
+        requests = value;
+      });
+    });
+    getContacts(
+      supabase.auth.currentUser!.id,
+      ContactsQueryType.sentRequests,
+    ).then((value) {
+      setState(() {
+        sentRequests = value;
       });
     });
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(updateAddContactButton);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(updateAddContactButton);
     _tabController.dispose();
     super.dispose();
   }
@@ -47,13 +92,23 @@ class _ContactsViewState extends State<ContactsView>
           ],
         ),
       ),
+      floatingActionButton:
+          showAddButton
+              ? FloatingActionButton(
+                onPressed: () async {},
+                child: Icon(LucideIcons.userRoundPlus),
+              )
+              : null,
       body: TabBarView(
         controller: _tabController,
         children: [
           // Contacts Tab
           RefreshIndicator(
             onRefresh: () async {
-              await getContacts(supabase.auth.currentUser!.id).then((value) {
+              await getContacts(
+                supabase.auth.currentUser!.id,
+                ContactsQueryType.accepted,
+              ).then((value) {
                 setState(() {
                   contacts = value;
                 });
@@ -71,10 +126,66 @@ class _ContactsViewState extends State<ContactsView>
               ],
             ),
           ),
-          // Add Contact Tab
-          Center(child: Text('Add Contact Page')),
           // Requests Tab
-          Center(child: Text('Requests Page')),
+          RefreshIndicator(
+            onRefresh: () async {
+              await getContacts(
+                supabase.auth.currentUser!.id,
+                ContactsQueryType.recievedRequests,
+              ).then((value) {
+                setState(() {
+                  requests = value;
+                });
+              });
+            },
+            child: ListView(
+              children: [
+                if (myProfile.isNotEmpty)
+                  ListTile(title: Text('Your Profile'), dense: true),
+                if (myProfile.isNotEmpty &&
+                    myProfile['name'] != null &&
+                    myProfile['username'] != null)
+                  ContactListItem(
+                    name: myProfile['name'],
+                    username: myProfile['username'],
+                    isUser: true,
+                  ),
+                ListTile(title: Text('Received Requests')),
+                for (int i = 0; i < requests.length; i++)
+                  ContactListItem(
+                    name: requests[i]['name'],
+                    username: requests[i]['username'],
+                    profilePhotoUrl: requests[i]['profile_photo_url'],
+                    isSharing: requests[i]['is_sharing'],
+                  ),
+              ],
+            ),
+          ),
+          // Add Contact Tab
+          RefreshIndicator(
+            onRefresh: () async {
+              await getContacts(
+                supabase.auth.currentUser!.id,
+                ContactsQueryType.sentRequests,
+              ).then((value) {
+                setState(() {
+                  sentRequests = value;
+                });
+              });
+            },
+            child: ListView(
+              children: [
+                ListTile(title: Text('Sent Requests')),
+                for (int i = 0; i < sentRequests.length; i++)
+                  ContactListItem(
+                    name: sentRequests[i]['name'],
+                    username: sentRequests[i]['username'],
+                    profilePhotoUrl: sentRequests[i]['profile_photo_url'],
+                    isSharing: sentRequests[i]['is_sharing'],
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -86,6 +197,7 @@ class ContactListItem extends StatelessWidget {
   final String username;
   final String? profilePhotoUrl;
   final bool? isSharing;
+  final bool isUser;
 
   const ContactListItem({
     super.key,
@@ -93,6 +205,7 @@ class ContactListItem extends StatelessWidget {
     required this.username,
     this.isSharing,
     this.profilePhotoUrl,
+    this.isUser = false,
   });
 
   @override
@@ -113,34 +226,67 @@ class ContactListItem extends StatelessWidget {
       ),
       title: Text(name),
       subtitle: Text(username),
-      trailing: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color:
-              isSharing == true
-                  ? Colors.greenAccent.withValues(alpha: 0.25)
-                  : isSharing == false
-                  ? Colors.grey.withValues(alpha: 0.25)
-                  : ColorScheme.of(context).primary.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          isSharing == true
-              ? "Sharing Location"
-              : isSharing == false
-              ? "Not Sharing Location"
-              : "Receiver",
-          style: TextStyle(
-            fontSize: 12,
-            color:
-                isSharing == true
-                    ? Colors.greenAccent
-                    : isSharing == false
-                    ? Colors.grey
-                    : ColorScheme.of(context).primary,
-          ),
-        ),
-      ),
+      trailing:
+          isUser
+              ? IconButton(
+                onPressed: () {
+                  SharePlus.instance.share(
+                    ShareParams(
+                      title: 'Add my contact on ARMOUR',
+                      text:
+                          'Add my contact on ARMOUR, The personal safety app for the modern age.\nName: $name\nUsername: $username',
+                    ),
+                  );
+                },
+                icon: Icon(
+                  LucideIcons.share2,
+                  color: ColorScheme.of(context).primary,
+                ),
+              )
+              : Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color:
+                      isSharing == true
+                          ? Colors.greenAccent.withValues(alpha: 0.25)
+                          : isSharing == false
+                          ? Colors.grey.withValues(alpha: 0.25)
+                          : ColorScheme.of(
+                            context,
+                          ).primary.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  isSharing == true
+                      ? "Sharing Location"
+                      : isSharing == false
+                      ? "Not Sharing Location"
+                      : "Receiver",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        isSharing == true
+                            ? Colors.greenAccent
+                            : isSharing == false
+                            ? Colors.grey
+                            : ColorScheme.of(context).primary,
+                  ),
+                ),
+              ),
     );
+  }
+}
+
+class AddContactDialog extends StatefulWidget {
+  const AddContactDialog({super.key});
+
+  @override
+  State<AddContactDialog> createState() => _AddContactDialogState();
+}
+
+class _AddContactDialogState extends State<AddContactDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

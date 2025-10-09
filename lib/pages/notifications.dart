@@ -1,4 +1,5 @@
 import 'package:armour_app/main.dart';
+import 'package:armour_app/pages/contacts.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
@@ -100,6 +101,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 leading: Icon(
                   notificationIconMap[notif['type']] ?? LucideIcons.bell,
                 ),
+                onTap: () {
+                  if (notif['type'] == 'contact_request') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => ContactsPage()),
+                    );
+                  }
+                },
                 subtitle:
                     notif['message'] != null ? Text(notif['message']) : null,
                 trailing: Text(

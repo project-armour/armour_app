@@ -17,11 +17,13 @@ class _ContactsButtonState extends State<ContactsButton> {
 
   @override
   void initState() {
-    getContacts(supabase.auth.currentUser!.id).then((value) {
-      setState(() {
-        contacts = value;
-      });
-    });
+    getContacts(supabase.auth.currentUser!.id, ContactsQueryType.accepted).then(
+      (value) {
+        setState(() {
+          contacts = value;
+        });
+      },
+    );
     super.initState();
   }
 
@@ -34,7 +36,7 @@ class _ContactsButtonState extends State<ContactsButton> {
         onTap: () async {
           await Navigator.of(
             context,
-          ).push(MaterialPageRoute(builder: (context) => ContactsView()));
+          ).push(MaterialPageRoute(builder: (context) => ContactsPage()));
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

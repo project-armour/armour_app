@@ -1,8 +1,6 @@
 import 'dart:ui';
 
 import 'package:armour_app/helpers/url_launch_helper.dart';
-import 'package:armour_app/pages/fake_call.dart';
-import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';

@@ -97,7 +97,6 @@ class FgTaskHandler extends TaskHandler {
 
   @override
   void onReceiveData(Object data) async {
-    print('onReceiveData(data: $data)');
     if (data is Map<String, dynamic>) {
       if (data.containsKey('loginStatus')) {
         isLoggedIn = data['loginStatus'];
@@ -198,19 +197,16 @@ class FgTaskHandler extends TaskHandler {
     }
 
     if (supabase != null) {
-      notificationsChannel = supabase
-          ?.channel('notifications')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'notifications',
-            callback: handleNotification,
-          )
-          .subscribe((status, obj) {
-            if (status == RealtimeSubscribeStatus.subscribed) {
-              print("Subscribed to notifications channel");
-            }
-          });
+      notificationsChannel =
+          supabase
+              ?.channel('notifications')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.all,
+                schema: 'public',
+                table: 'notifications',
+                callback: handleNotification,
+              )
+              .subscribe();
     }
   }
 
