@@ -22,6 +22,7 @@ class HomePageSheet extends StatefulWidget {
     this.markers = const [],
     this.isTracking = false,
     this.walkingPace,
+    required this.actions,
     required this.trackUser,
     required this.shareLocation,
   });
@@ -33,6 +34,7 @@ class HomePageSheet extends StatefulWidget {
   final VoidCallback trackUser;
   final VoidCallback shareLocation;
   final double? walkingPace;
+  final List<Function()> actions;
 
   @override
   State<HomePageSheet> createState() => _HomePageSheetState();
@@ -156,38 +158,23 @@ class _HomePageSheetState extends State<HomePageSheet>
                               SheetMainButton(
                                 text: "Fake Call",
                                 icon: LucideIcons.phoneCall,
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => const FakeCallScreen(),
-                                    ),
-                                  );
-                                },
+                                onPressed: widget.actions[0],
                               ),
                               SheetMainButton(
                                 text: "Panic",
                                 icon: LucideIcons.messageCircle,
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const PanicPage(),
-                                    ),
-                                  );
-                                },
+                                onPressed: widget.actions[1],
                               ),
                               SizedBox(width: 72),
                               SheetMainButton(
                                 text: "SOS",
                                 icon: LucideIcons.circleAlert,
-                                onPressed: () {},
+                                onPressed: widget.actions[2],
                               ),
                               SheetMainButton(
                                 text: "Settings",
                                 icon: LucideIcons.settings,
-                                onPressed: () {},
+                                onPressed: widget.actions[3],
                               ),
                             ],
                           ),

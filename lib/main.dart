@@ -73,12 +73,14 @@ final notificationTitleMap = {
   'location_sharing_started': 'Location Sharing Started',
   'location_sharing_ended': 'Location Sharing Ended',
   'contact_request': 'Contact Request',
+  'panic': 'Panic Alert',
 };
 
 final notificationIconMap = {
   'location_sharing_started': LucideIcons.mapPin,
   'location_sharing_ended': LucideIcons.mapPin,
   'contact_request': LucideIcons.user,
+  'panic': LucideIcons.circleAlert,
 };
 
 class MyApp extends StatefulWidget {

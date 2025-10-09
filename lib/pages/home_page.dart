@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double speedMps = 0.0;
 
   String? selfProfilePhotoUrl;
+  String myName = '';
 
   @override
   void initState() {
@@ -57,6 +58,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
 
+    refreshMarkers().then((_) {
+      testProfile();
+    });
     testProfile();
     startListening();
 
@@ -66,7 +70,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     updateConnectedDevice();
-    refreshMarkers();
     subscribeToLocationSharing();
   }
 
@@ -82,6 +85,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         setState(() {
           selfProfilePhotoUrl = profiles[0]['profile_photo_url'] ?? '';
           markers[0]['imageUrl'] = selfProfilePhotoUrl;
+          myName = profiles[0]['name'] ?? '';
+          markers[0]['name'] = '$myName (You)';
         });
       }
       if (profiles.isEmpty && mounted) {
@@ -92,7 +97,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void refreshMarkers() async {
+  Future<void> refreshMarkers() async {
     var newMarkers = [
       {
         'context': context,
@@ -291,11 +296,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             characteristic.onValueReceived.listen((value) {
               print("Received Notification");
               print("${characteristic.uuid}: ${utf8.decode(value)}");
-              if (mounted && utf8.decode(value) == "trg \$single") {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const PanicPage()),
-                );
-              } else if (mounted && utf8.decode(value) == "trg \$long") {
+              if (mounted && utf8.decode(value) == "trg short1") {
+                panic();
+              } else if (mounted && utf8.decode(value) == "trg short2") {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const FakeCallScreen(),
@@ -313,6 +316,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } catch (e) {
       print("Error in heart rate setup: $e");
     }
+  }
+
+  void panic() async {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const PanicPage()));
+    await supabase.from('notifications').insert({
+      'sender': supabase.auth.currentUser?.id,
+      'priority': 'high',
+      'type': 'panic',
+      'message':
+          '$myName has triggered a panic alert, tap to view their location on the map',
+    });
+    startSharing();
   }
 
   void startSharing() async {
@@ -518,6 +535,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               isTracking: _isTrackingUser,
               trackUser: trackUser,
               walkingPace: speedMps,
+              actions: [
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FakeCallScreen(),
+                    ),
+                  );
+                },
+                () => panic(),
+                () => panic(),
+                () {},
+              ],
             ),
           ),
         ],

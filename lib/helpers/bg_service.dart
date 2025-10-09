@@ -133,7 +133,7 @@ class FgTaskHandler extends TaskHandler {
           await supabase
               ?.from('profiles')
               .select()
-              .eq('id', supabase?.auth.currentUser?.id as Object)
+              .eq('id', supabase?.auth.currentUser?.id as String)
               .single();
       final myName = myProfile?['name'] as String? ?? 'User';
 
