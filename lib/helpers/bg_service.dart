@@ -177,23 +177,12 @@ class FgTaskHandler extends TaskHandler {
 
   void subscribeToNotifications() async {
     void handleNotification(PostgresChangePayload payload) {
-      if (payload.newRecord['type'] == 'location_sharing_started') {
-        notificationsPlugin.show(
-          payload.newRecord['id'],
-          'Location Sharing Started',
-          payload.newRecord['message'],
-          notificationDetails,
-        );
-      } else if (payload.newRecord['type'] == 'contact_request') {
-        if (notificationTitleMap.containsKey(payload.newRecord['type'])) {
-          notificationsPlugin.show(
-            payload.newRecord['id'],
-            notificationTitleMap[payload.newRecord['type']],
-            payload.newRecord['message'],
-            notificationDetails,
-          );
-        }
-      }
+      notificationsPlugin.show(
+        payload.newRecord['id'],
+        notificationTitleMap[payload.newRecord['type']],
+        payload.newRecord['message'],
+        notificationDetails,
+      );
     }
 
     if (supabase != null) {
