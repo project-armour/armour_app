@@ -1,4 +1,6 @@
 import 'package:armour_app/main.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum ContactsQueryType { accepted, recievedRequests, sentRequests }
 
@@ -14,21 +16,21 @@ Future<List<Map<String, dynamic>>> getContacts(
     );
 
     Set<String> senderUserIds = {};
-    Set<String> reveiverUserIds = {};
+    Set<String> receiverUserIds = {};
 
     for (var contact in contactsList) {
       if (contact['receiver'] == userId) {
         senderUserIds.add(contact['sender']);
       } else {
-        reveiverUserIds.add(contact['receiver']);
+        receiverUserIds.add(contact['receiver']);
       }
     }
 
-    if (reveiverUserIds.isNotEmpty) {
+    if (receiverUserIds.isNotEmpty) {
       final profilesResponse = await supabase
           .from("profiles")
           .select()
-          .inFilter('id', reveiverUserIds.toList());
+          .inFilter('id', receiverUserIds.toList());
       // add a isSharing parameter and change to false
       for (var profile in profilesResponse) {
         profile['isSharing'] = null;
@@ -37,13 +39,24 @@ Future<List<Map<String, dynamic>>> getContacts(
     }
 
     if (senderUserIds.isNotEmpty) {
-      final profilesResponse = await supabase
+      var profilesResponse = await supabase
           .from("location_sharing_with_profiles")
           .select(
             'id:sender, name:sender_name, username:sender_username, profile_photo_url, is_sharing',
           )
           .inFilter('sender', senderUserIds.toList());
-      contacts.addAll(profilesResponse);
+      if (profilesResponse.isNotEmpty) {
+        contacts.addAll(profilesResponse);
+      } else {
+        profilesResponse = await supabase
+            .from("profiles")
+            .select()
+            .inFilter('id', senderUserIds.toList());
+        for (var profile in profilesResponse) {
+          profile['isSharing'] = false;
+        }
+        contacts.addAll(profilesResponse);
+      }
     }
 
     return contacts;
@@ -73,4 +86,57 @@ Future<List<Map<String, dynamic>>> getContacts(
   }
 
   return Future.value(contacts);
+}
+
+Future<bool> addContact(BuildContext context, String username) async {
+  try {
+    final recieverUuid = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .single()
+        .then((value) => value["id"]);
+
+    await supabase.from("contacts").insert({
+      "sender": supabase.auth.currentUser?.id,
+      "receiver": recieverUuid,
+      "accepted": false,
+    });
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Contact request sent to $username")),
+      );
+    }
+  } on PostgrestException catch (e) {
+    if (e.code == "PGRST116") {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("User not found")));
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+Future<void> acceptContact(BuildContext context, String senderId) async {
+  await supabase
+      .from("contacts")
+      .update({"accepted": true})
+      .eq("sender", senderId);
+  if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("Contact request accepted")));
+  }
+}
+
+Future<void> rejectContact(BuildContext context, String senderId) async {
+  await supabase.from("contacts").delete().eq("sender", senderId);
+  if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("Contact request rejected")));
+  }
 }
