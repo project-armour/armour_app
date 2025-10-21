@@ -27,6 +27,8 @@ class FgTaskHandler extends TaskHandler {
   String? _refreshToken;
   bool isLoggedIn = false;
   bool isSharing = false;
+  bool isTrackingWpm = true;
+  double normalWpm = 0.5;
   StreamSubscription<Position>? _positionStream;
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -75,6 +77,12 @@ class FgTaskHandler extends TaskHandler {
           'is_sharing': true,
           'last_updated': DateTime.now().toIso8601String(),
         }, onConflict: 'sender');
+      }
+
+      if (isTrackingWpm) {
+        if (speed > normalWpm) {
+          wpmAlert(speed - normalWpm);
+        }
       }
     }, () => {print("Error in starting location stream")});
 
@@ -173,6 +181,26 @@ class FgTaskHandler extends TaskHandler {
         const NotificationButton(id: 'btn_stop', text: 'Stop Service'),
       ],
     );
+  }
+
+  void wpmAlert(double exceed) async {
+    final myProfile =
+        await supabase
+            ?.from('profiles')
+            .select()
+            .eq('id', supabase?.auth.currentUser?.id as String)
+            .single();
+    final myName = myProfile?['name'] as String? ?? 'User';
+
+    startSharing();
+
+    await supabase?.from('notifications').insert({
+      'sender': supabase?.auth.currentUser?.id,
+      'priority': 'high',
+      'type': 'wpm_alert',
+      'message':
+          '$myName has exceeded their general walking pace by $exceed m/s, tap to view their location on the map.',
+    });
   }
 
   void subscribeToNotifications() async {

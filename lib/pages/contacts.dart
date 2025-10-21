@@ -388,8 +388,13 @@ class _AddContactDialogState extends State<AddContactDialog> {
                         context,
                         usernameController.text,
                       );
-                      if (context.mounted) {
-                        Navigator.of(context).pop(result);
+                      if (result != "success") {
+                        setState(() {
+                          usernameError = result;
+                        });
+                      }
+                      if (context.mounted && result == "success") {
+                        Navigator.of(context).pop(result == "success");
                       }
                     }
                   },

@@ -88,7 +88,7 @@ Future<List<Map<String, dynamic>>> getContacts(
   return Future.value(contacts);
 }
 
-Future<bool> addContact(BuildContext context, String username) async {
+Future<String> addContact(BuildContext context, String username) async {
   try {
     final recieverUuid = await supabase
         .from("profiles")
@@ -109,15 +109,13 @@ Future<bool> addContact(BuildContext context, String username) async {
     }
   } on PostgrestException catch (e) {
     if (e.code == "PGRST116") {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("User not found")));
-      }
+      return "User not found";
+    } else if (e.code == "23505") {
+      return "Contact exists or request already sent";
     }
-    return false;
+    return "Unknown error";
   }
-  return true;
+  return "success";
 }
 
 Future<void> acceptContact(BuildContext context, String senderId) async {
