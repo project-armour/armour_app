@@ -424,15 +424,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.surface.withValues(
+                  alpha: loadingComplete ? 0.5 : 0,
+                ),
                 border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  ),
+                  bottom:
+                      loadingComplete
+                          ? BorderSide(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                          )
+                          : BorderSide.none,
                 ),
               ),
             ),
@@ -568,34 +571,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
 
           /* Loading indicator */
-          if (!loadingComplete)
-            SafeArea(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ColorScheme.of(
-                      context,
-                    ).surface.withValues(alpha: 0.5),
-                  ),
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Loading...",
-                          style: TextTheme.of(context).titleMedium,
-                        ),
-                        SizedBox(height: 16),
-                        CircularProgressIndicator(),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          if (!loadingComplete) LoadingScreen(),
         ],
+      ),
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+        child: Container(
+          decoration: BoxDecoration(
+            color: ColorScheme.of(context).surface.withValues(alpha: 0.85),
+          ),
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset("assets/images/loading-animation.png", height: 150),
+                Text(
+                  "Initializing...",
+                  style: TextTheme.of(
+                    context,
+                  ).bodyMedium?.copyWith(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
