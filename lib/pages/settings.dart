@@ -56,26 +56,44 @@ class WPEdit extends StatefulWidget {
 
 class _WPEditState extends State<WPEdit> {
   double? currentWpm;
+  double newWpm = 2.0;
 
   void getWpm() async {
-    final wpmData = (await supabase
+    final wpmData = await supabase
         .from('preferences')
         .select('wpm')
         .eq('user_id', supabase.auth.currentUser!.id)
-        .limit(1));
+        .limit(1);
+
+    print(wpmData);
+    if (wpmData.isNotEmpty) {
+      setState(() {
+        currentWpm = wpmData[0]['wpm']?.toDouble() ?? 0.0;
+        newWpm = currentWpm!;
+      });
+    }
+  }
+
+  void setWpm() async {
+    await supabase
+        .from('preferences')
+        .upsert({'user_id': supabase.auth.currentUser!.id, 'wpm': newWpm})
+        .eq('user_id', supabase.auth.currentUser!.id);
+
+    print("Updated WPM: $newWpm");
   }
 
   @override
   void initState() {
-    super.initState();
     getWpm();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Padding(
-        padding: EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           spacing: 8,
@@ -88,11 +106,50 @@ class _WPEditState extends State<WPEdit> {
               "Adjust the threshold speed to cause an alert",
               style: TextTheme.of(context).bodySmall,
             ),
-            if (currentWpm != null)
-              Text(
-                "Current Walking Pace: ${currentWpm!.toStringAsFixed(2)} WPM",
-                style: TextTheme.of(context).bodyMedium,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              spacing: 12,
+              children: [
+                Flexible(
+                  child: Slider(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    value: newWpm,
+                    min: 0.0,
+                    max: 10.0,
+                    divisions: 100,
+                    label: "${newWpm.toStringAsFixed(1)} m/s",
+                    onChanged: (value) {
+                      setState(() {
+                        newWpm = value;
+                      });
+                    },
+                  ),
+                ),
+                Text("${newWpm.toStringAsFixed(1)} m/s"),
+              ],
+            ),
+            Row(
+              spacing: 8,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Cancel"),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    setWpm();
+                    setState(() {
+                      currentWpm = newWpm;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Text("Save"),
+                ),
+              ],
+            ),
           ],
         ),
       ),

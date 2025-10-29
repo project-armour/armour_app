@@ -28,7 +28,7 @@ class FgTaskHandler extends TaskHandler {
   bool isLoggedIn = false;
   bool isSharing = false;
   bool isTrackingWpm = false;
-  double normalWpm = 100;
+  double normalWpm = 2;
   StreamSubscription<Position>? _positionStream;
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
