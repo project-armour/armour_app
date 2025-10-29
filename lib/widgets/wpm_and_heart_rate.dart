@@ -26,6 +26,9 @@ class _HeartRateMonitorState extends State<HeartRateMonitor> {
       isMonitoring = !isMonitoring;
     });
     FlutterForegroundTask.sendDataToTask({"is_tracking_wpm": isMonitoring});
+    if (isMonitoring) {
+      getThresholdWpm();
+    }
   }
 
   void getThresholdWpm() async {

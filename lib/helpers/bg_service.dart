@@ -79,8 +79,6 @@ class FgTaskHandler extends TaskHandler {
         }, onConflict: 'sender');
       }
 
-      print("Speed: $speed");
-
       if (isTrackingWpm) {
         print("Speed: $speed, Threshold: $thresholdWpm");
         if (speed > thresholdWpm) {
