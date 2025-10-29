@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class CreateProfilePage extends StatefulWidget {
-  const CreateProfilePage({super.key});
+  const CreateProfilePage({super.key, this.edit = false});
+
+  final bool edit;
 
   @override
   State<CreateProfilePage> createState() => _CreateProfilePageState();
@@ -89,10 +91,36 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     }
   }
 
+  void getProfile() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      final profiles =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
+      if (mounted) {
+        setState(() {
+          _nameController.text = profiles['name'] ?? '';
+          _usernameController.text = profiles['username'] ?? '';
+          _photoUrlController.text = profiles['profile_photo_url'] ?? '';
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.edit) {
+      getProfile();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Profile")),
+      appBar: AppBar(
+        title: Text(widget.edit ? "Edit Profile" : "Create Profile"),
+      ),
       bottomNavigationBar: BottomAppBar(
         color: ColorScheme.of(context).surfaceContainerLow,
         child: Align(
@@ -105,9 +133,15 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               shape: WidgetStatePropertyAll(
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              padding: WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              ),
             ),
-            label: Text("Continue"),
-            icon: Icon(LucideIcons.arrowRight300, size: 24),
+            label: Text(widget.edit ? "Save" : "Continue"),
+            icon: Icon(
+              widget.edit ? LucideIcons.check : LucideIcons.arrowRight300,
+              size: 24,
+            ),
             iconAlignment: IconAlignment.end,
           ),
         ),
@@ -116,12 +150,13 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
         padding: const EdgeInsets.all(20.0),
         child: ListView(
           children: [
-            Padding(
-              padding: EdgeInsets.only(bottom: 20),
-              child: Text(
-                "Create your ARMOUR Profile below. A profile photo makes you easier to identify on the map.",
+            if (!widget.edit)
+              Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text(
+                  "Create your ARMOUR Profile below. A profile photo makes you easier to identify on the map.",
+                ),
               ),
-            ),
             Center(
               child: Stack(
                 alignment: Alignment.center,

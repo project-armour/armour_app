@@ -4,7 +4,9 @@ import 'package:just_audio/just_audio.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class FakeCallScreen extends StatefulWidget {
-  const FakeCallScreen({super.key});
+  const FakeCallScreen({super.key, this.ring = false});
+
+  final bool ring;
 
   @override
   State<FakeCallScreen> createState() => _FakeCallScreenState();
@@ -13,15 +15,27 @@ class FakeCallScreen extends StatefulWidget {
 class _FakeCallScreenState extends State<FakeCallScreen> {
   bool isMuted = false;
   bool speakerMode = false;
+  bool ringerMode = false;
   final player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
-    playSound('assets/sounds/fakecall-audio.aac');
+    if (widget.ring) {
+      setState(() {
+        ringerMode = true;
+        speakerMode = true;
+      });
+      playSound('assets/sounds/ringtone.aac', loop: true);
+    } else {
+      setState(() {
+        speakerMode = false;
+      });
+      playSound('assets/sounds/fakecall-audio.aac');
+    }
   }
 
-  void playSound(String soundPath) async {
+  void playSound(String soundPath, {bool loop = false}) async {
     final session = await AudioSession.instance;
 
     if (speakerMode) {
@@ -51,6 +65,11 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
       await player.setAsset(soundPath);
     } catch (e) {
       print(e);
+    }
+    if (loop) {
+      await player.setLoopMode(LoopMode.all);
+    } else {
+      await player.setLoopMode(LoopMode.off);
     }
     await player.play();
   }
@@ -98,56 +117,86 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _CallActionButton(
-                        icon: Icons.mic_off,
-                        label: 'Mute',
-                        color:
-                            isMuted
-                                ? ColorScheme.of(context).primary
-                                : Colors.grey,
-                        onPressed: () {
-                          setState(() {
-                            isMuted = !isMuted;
-                          });
-                        },
-                      ),
-                      _CallActionButton(
-                        icon: LucideIcons.volume2,
-                        label: 'Speaker',
-                        color:
-                            speakerMode
-                                ? ColorScheme.of(context).primary
-                                : Colors.grey,
-                        onPressed: () {
-                          setState(() {
-                            speakerMode = !speakerMode;
-                            if (speakerMode) {
-                              player.setAndroidAudioAttributes(
-                                const AndroidAudioAttributes(
-                                  usage: AndroidAudioUsage.media,
-                                ),
-                              );
-                            } else {
-                              player.setAndroidAudioAttributes(
-                                const AndroidAudioAttributes(
-                                  usage: AndroidAudioUsage.voiceCommunication,
-                                ),
-                              );
-                            }
-                          });
-                        },
-                      ),
-                      _CallActionButton(
-                        icon: Icons.call_end,
-                        label: 'End',
-                        color: Colors.red,
-                        onPressed: () {
-                          player.stop();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
+                    children:
+                        ringerMode
+                            ? [
+                              _CallActionButton(
+                                icon: Icons.call,
+                                label: 'Answer',
+                                color: Colors.green,
+                                onPressed: () {
+                                  player.stop();
+                                  setState(() {
+                                    ringerMode = false;
+                                    speakerMode = false;
+                                    playSound(
+                                      'assets/sounds/fakecall-audio.aac',
+                                    );
+                                  });
+                                },
+                              ),
+                              _CallActionButton(
+                                icon: Icons.call_end,
+                                label: 'Decline',
+                                color: Colors.red,
+                                onPressed: () {
+                                  player.stop();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ]
+                            : [
+                              _CallActionButton(
+                                icon: Icons.mic_off,
+                                label: 'Mute',
+                                color:
+                                    isMuted
+                                        ? ColorScheme.of(context).primary
+                                        : Colors.grey,
+                                onPressed: () {
+                                  setState(() {
+                                    isMuted = !isMuted;
+                                  });
+                                },
+                              ),
+                              _CallActionButton(
+                                icon: LucideIcons.volume2,
+                                label: 'Speaker',
+                                color:
+                                    speakerMode
+                                        ? ColorScheme.of(context).primary
+                                        : Colors.grey,
+                                onPressed: () {
+                                  setState(() {
+                                    speakerMode = !speakerMode;
+                                    if (speakerMode) {
+                                      player.setAndroidAudioAttributes(
+                                        const AndroidAudioAttributes(
+                                          usage: AndroidAudioUsage.media,
+                                        ),
+                                      );
+                                    } else {
+                                      player.setAndroidAudioAttributes(
+                                        const AndroidAudioAttributes(
+                                          usage:
+                                              AndroidAudioUsage
+                                                  .voiceCommunication,
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
+                              ),
+                              _CallActionButton(
+                                icon: Icons.call_end,
+                                label: 'End',
+                                color: Colors.red,
+                                onPressed: () {
+                                  player.stop();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
                   ),
                 ],
               ),

@@ -27,8 +27,8 @@ class FgTaskHandler extends TaskHandler {
   String? _refreshToken;
   bool isLoggedIn = false;
   bool isSharing = false;
-  bool isTrackingWpm = true;
-  double normalWpm = 0.5;
+  bool isTrackingWpm = false;
+  double normalWpm = 100;
   StreamSubscription<Position>? _positionStream;
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -127,6 +127,12 @@ class FgTaskHandler extends TaskHandler {
         } else {
           stopSharing();
         }
+      }
+      if (data.containsKey('is_tracking_wpm')) {
+        isTrackingWpm = data['is_tracking_wpm'];
+      }
+      if (data.containsKey('normal_wpm')) {
+        normalWpm = data['normal_wpm'];
       }
     }
   }

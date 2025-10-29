@@ -5,7 +5,7 @@ import 'package:armour_app/widgets/above_sheet_actions.dart';
 import 'package:armour_app/widgets/band_status.dart';
 import 'package:armour_app/widgets/checkin_button.dart';
 import 'package:armour_app/widgets/contacts_button.dart';
-import 'package:armour_app/widgets/heart_rate_monitor.dart';
+import 'package:armour_app/widgets/wpm_and_heart_rate.dart';
 import 'package:armour_app/widgets/sheet_main_button.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';

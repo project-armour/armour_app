@@ -12,6 +12,7 @@ import 'package:armour_app/pages/fake_call.dart';
 import 'package:armour_app/pages/notifications.dart';
 import 'package:armour_app/pages/panic_page.dart';
 import 'package:armour_app/pages/profile_creation.dart';
+import 'package:armour_app/pages/settings.dart';
 import 'package:armour_app/widgets/home_page_sheet.dart';
 import 'package:armour_app/widgets/map_view.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +46,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   String? selfProfilePhotoUrl;
   String myName = '';
+  bool isPanicked = false;
+  bool isFakeCalled = false;
 
   @override
   void initState() {
@@ -275,7 +278,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     for (var device in connectedDevices) {
       // Check if the device name matches
-      if (device.advName == "Brick(tm)") {
+      if (["Brick(tm)", "ARMOUR"].contains(device.advName)) {
         deviceProvider.setDevice(device);
       }
     }
@@ -292,18 +295,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           if (characteristic.properties.notify) {
             await characteristic.setNotifyValue(true, forceIndications: true);
 
-            // Listen for notifications
             characteristic.onValueReceived.listen((value) {
               print("Received Notification");
               print("${characteristic.uuid}: ${utf8.decode(value)}");
               if (mounted && utf8.decode(value) == "trg short1") {
                 panic();
               } else if (mounted && utf8.decode(value) == "trg short2") {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const FakeCallScreen(),
-                  ),
-                );
+                if (!isFakeCalled) {
+                  isFakeCalled = true;
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder:
+                              (context) => const FakeCallScreen(ring: true),
+                        ),
+                      )
+                      .then((val) {
+                        isFakeCalled = false;
+                      });
+                }
               }
             });
 
@@ -319,25 +329,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void panic() async {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const PanicPage()));
-    await supabase.from('notifications').insert({
-      'sender': supabase.auth.currentUser?.id,
-      'priority': 'high',
-      'type': 'panic',
-      'message':
-          '$myName has triggered a panic alert, tap to view their location on the map',
-    });
-    startSharing();
+    if (!isPanicked) {
+      isPanicked = true;
+      Navigator.of(context)
+          .push(
+            MaterialPageRoute(
+              settings: const RouteSettings(name: 'PanicPage'),
+              builder: (context) => const PanicPage(),
+            ),
+          )
+          .then((val) {
+            isPanicked = false;
+          });
+
+      await supabase.from('notifications').insert({
+        'sender': supabase.auth.currentUser?.id,
+        'priority': 'high',
+        'type': 'panic',
+        'message':
+            '$myName has triggered a panic alert, tap to view their location on the map',
+      });
+      startSharing();
+    }
   }
 
   void startSharing() async {
     await supabase.from('location_sharing').upsert({
-      'sender': supabase.auth.currentUser!.id,
+      'sender': supabase.auth.currentUser?.id,
       'is_sharing': true,
-      'latitude': markers[0]['coordinates']!.latitude,
-      'longitude': markers[0]['coordinates']!.longitude,
+      'latitude': markers[0]['coordinates']?.latitude,
+      'longitude': markers[0]['coordinates']?.longitude,
     }, onConflict: 'sender');
     FlutterForegroundTask.sendDataToTask({'is_sharing': true});
     setState(() {
@@ -546,7 +567,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 },
                 () => panic(),
                 () => panic(),
-                () {},
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                ),
               ],
             ),
           ),

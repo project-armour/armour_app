@@ -22,14 +22,16 @@ class _BandStatusState extends State<BandStatus> {
 
   void updateDevice() {
     print("UPDATE DEVICE");
-    setState(() {
-      connectedDevice = deviceProvider.device;
-      if (connectedDevice != null) {
-        isConnected = connectedDevice!.isConnected;
-      } else {
-        isConnected = false;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        connectedDevice = deviceProvider.device;
+        if (connectedDevice != null) {
+          isConnected = connectedDevice!.isConnected;
+        } else {
+          isConnected = false;
+        }
+      });
+    }
   }
 
   @override

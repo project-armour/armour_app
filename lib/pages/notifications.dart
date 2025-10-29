@@ -21,6 +21,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
   }
 
+  void clearNotifications() async {
+    await supabase
+        .from('notifications')
+        .delete()
+        .or('receiver.is.null,receiver.eq.${supabase.auth.currentUser?.id}');
+    getNotifications();
+  }
+
   @override
   void initState() {
     getNotifications();
@@ -30,7 +38,36 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: FilledButton.icon(
+              icon: const Icon(LucideIcons.trash2),
+              onPressed: () async {
+                await showDialog(
+                  context: context,
+                  builder: (context) => DeletionConfirmDialog(allNotifs: true),
+                ).then((value) {
+                  if (value == true) {
+                    clearNotifications();
+                  }
+                });
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: ColorScheme.of(
+                  context,
+                ).errorContainer.withValues(alpha: 0.25),
+                foregroundColor: ColorScheme.of(context).onErrorContainer,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              label: const Text('Clear All'),
+              iconAlignment: IconAlignment.end,
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: getNotifications,
         child: ListView.builder(
@@ -49,40 +86,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               confirmDismiss: (direction) async {
                 return await showDialog(
                   context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        backgroundColor:
-                            ColorScheme.of(context).surfaceContainerLow,
-                        title: const Text('Delete Notification'),
-                        content: const Text(
-                          'Are you sure you want to delete this notification?',
-                        ),
-                        actions: [
-                          FilledButton.tonal(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: ColorScheme.of(
-                                context,
-                              ).primaryContainer.withValues(alpha: 0.25),
-                              foregroundColor:
-                                  ColorScheme.of(context).onPrimaryContainer,
-                            ),
-                            child: const Text('Cancel'),
-                          ),
-                          FilledButton.tonal(
-                            onPressed: () => Navigator.of(context).pop(true),
-
-                            style: FilledButton.styleFrom(
-                              backgroundColor: ColorScheme.of(
-                                context,
-                              ).errorContainer.withValues(alpha: 0.25),
-                              foregroundColor:
-                                  ColorScheme.of(context).onErrorContainer,
-                            ),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
+                  builder: (context) => DeletionConfirmDialog(),
                 );
               },
               onDismissed: (direction) async {
@@ -122,6 +126,49 @@ class _NotificationsPageState extends State<NotificationsPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+class DeletionConfirmDialog extends StatelessWidget {
+  const DeletionConfirmDialog({super.key, this.allNotifs = false});
+  final bool allNotifs;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: ColorScheme.of(context).surfaceContainerLow,
+      title: Text(
+        allNotifs ? 'Delete All Notifications' : 'Delete Notification',
+      ),
+      content: Text(
+        allNotifs
+            ? 'Are you sure you want to delete all your notifications? This action cannot be undone.'
+            : 'Are you sure you want to delete this notification? This action cannot be undone.',
+      ),
+      actions: [
+        FilledButton.tonal(
+          onPressed: () => Navigator.of(context).pop(false),
+          style: FilledButton.styleFrom(
+            backgroundColor: ColorScheme.of(
+              context,
+            ).primaryContainer.withValues(alpha: 0.25),
+            foregroundColor: ColorScheme.of(context).onPrimaryContainer,
+          ),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.tonal(
+          onPressed: () => Navigator.of(context).pop(true),
+
+          style: FilledButton.styleFrom(
+            backgroundColor: ColorScheme.of(
+              context,
+            ).errorContainer.withValues(alpha: 0.25),
+            foregroundColor: ColorScheme.of(context).onErrorContainer,
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
     );
   }
 }

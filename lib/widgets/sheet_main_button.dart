@@ -20,7 +20,7 @@ class SheetMainButton extends StatelessWidget {
         shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        padding: WidgetStatePropertyAll(EdgeInsets.fromLTRB(14, 10, 14, 10)),
+        padding: WidgetStatePropertyAll(EdgeInsets.fromLTRB(12, 8, 12, 8)),
         iconSize: WidgetStatePropertyAll(22),
       ),
 
