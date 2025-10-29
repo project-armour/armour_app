@@ -49,6 +49,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool isPanicked = false;
   bool isFakeCalled = false;
 
+  bool loadingComplete = false;
+
   @override
   void initState() {
     super.initState();
@@ -180,27 +182,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       )
                       .firstOrNull;
               if (marker != null) {
-                /*if (marker['isSharing'] == false &&
-                    payload.newRecord['is_sharing'] == true) {
-                  await flutterLocalNotificationsPlugin.show(
-                    0,
-                    "Location Sharing Started",
-                    "A contact started sharing their location.",
-                    NotificationDetails(
-                      android: AndroidNotificationDetails(
-                        'default_channel_id',
-                        'General',
-                        importance: Importance.max,
-                        priority: Priority.high,
-                      ),
-                    ),
-                  );
-                } else if (marker['isSharing'] == true &&
-                    payload.newRecord['is_sharing'] == false) {
-                  // Notify the user
-                  flutterLocalNotificationsPlugin.cancel(0);
-                }*/
-
                 setState(() {
                   marker['isSharing'] = payload.newRecord['is_sharing'];
                   marker['coordinates'] = LatLng(
@@ -240,7 +221,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }
         });
         if (_isTrackingUser) {
-          AnimateMap.move(this, _mapController, coords, destZoom: 16);
+          AnimateMap.move(this, _mapController, coords, destZoom: 16).then((_) {
+            if (!loadingComplete) {
+              setState(() {
+                loadingComplete = true;
+              });
+            }
+          });
         }
       }
     }
@@ -412,21 +399,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           "assets/images/gradient-wordmark.svg",
           height: 24,
         ),
-        leading: IconButton(
-          onPressed: () {
-            supabase.auth.signOut();
-          },
-          icon: Icon(LucideIcons.logOut),
-        ),
+        leading:
+            (!_isSharing && !isPanicked && loadingComplete)
+                ? IconButton(
+                  onPressed: () {
+                    supabase.auth.signOut();
+                  },
+                  icon: Icon(LucideIcons.logOut),
+                )
+                : null,
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => NotificationsPage()),
-              );
-            },
-            icon: Icon(LucideIcons.bell),
-          ),
+          if (loadingComplete)
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => NotificationsPage()),
+                );
+              },
+              icon: Icon(LucideIcons.bell),
+            ),
         ],
         flexibleSpace: ClipRRect(
           child: BackdropFilter(
@@ -451,6 +442,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: Stack(
         children: [
           MapView(mapController: _mapController, markers: markers),
+
           SafeArea(
             child: Container(
               padding: EdgeInsets.all(16),
@@ -574,6 +566,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ],
             ),
           ),
+
+          /* Loading indicator */
+          if (!loadingComplete)
+            SafeArea(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: ColorScheme.of(
+                      context,
+                    ).surface.withValues(alpha: 0.5),
+                  ),
+                  padding: EdgeInsets.all(16),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Loading...",
+                          style: TextTheme.of(context).titleMedium,
+                        ),
+                        SizedBox(height: 16),
+                        CircularProgressIndicator(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

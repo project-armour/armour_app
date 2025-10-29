@@ -28,7 +28,7 @@ class FgTaskHandler extends TaskHandler {
   bool isLoggedIn = false;
   bool isSharing = false;
   bool isTrackingWpm = false;
-  double normalWpm = 2;
+  double thresholdWpm = 2;
   StreamSubscription<Position>? _positionStream;
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -79,9 +79,12 @@ class FgTaskHandler extends TaskHandler {
         }, onConflict: 'sender');
       }
 
+      print("Speed: $speed");
+
       if (isTrackingWpm) {
-        if (speed > normalWpm) {
-          wpmAlert(speed - normalWpm);
+        print("Speed: $speed, Threshold: $thresholdWpm");
+        if (speed > thresholdWpm) {
+          wpmAlert(speed - thresholdWpm);
         }
       }
     }, () => {print("Error in starting location stream")});
@@ -131,8 +134,8 @@ class FgTaskHandler extends TaskHandler {
       if (data.containsKey('is_tracking_wpm')) {
         isTrackingWpm = data['is_tracking_wpm'];
       }
-      if (data.containsKey('normal_wpm')) {
-        normalWpm = data['normal_wpm'];
+      if (data.containsKey('threshold_wpm')) {
+        thresholdWpm = data['threshold_wpm'];
       }
     }
   }
@@ -157,7 +160,6 @@ class FgTaskHandler extends TaskHandler {
         'message':
             '$myName has started sharing their location, tap to view their location on the map',
       });
-      supabase?.auth.stopAutoRefresh();
     }
 
     FlutterForegroundTask.sendDataToMain({'is_sharing': true});
@@ -198,15 +200,17 @@ class FgTaskHandler extends TaskHandler {
             .single();
     final myName = myProfile?['name'] as String? ?? 'User';
 
-    startSharing();
-
     await supabase?.from('notifications').insert({
       'sender': supabase?.auth.currentUser?.id,
       'priority': 'high',
       'type': 'wpm_alert',
       'message':
-          '$myName has exceeded their general walking pace by $exceed m/s, tap to view their location on the map.',
+          '$myName has exceeded their general walking pace by ${exceed.toStringAsFixed(2)} m/s, tap to view their location on the map.',
     });
+
+    if (!isSharing) {
+      startSharing();
+    }
   }
 
   void subscribeToNotifications() async {

@@ -1,6 +1,7 @@
 import 'package:armour_app/main.dart';
 import 'package:armour_app/pages/profile_creation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -65,7 +66,6 @@ class _WPEditState extends State<WPEdit> {
         .eq('user_id', supabase.auth.currentUser!.id)
         .limit(1);
 
-    print(wpmData);
     if (wpmData.isNotEmpty) {
       setState(() {
         currentWpm = wpmData[0]['wpm']?.toDouble() ?? 0.0;
@@ -74,11 +74,13 @@ class _WPEditState extends State<WPEdit> {
     }
   }
 
-  void setWpm() async {
+  void setThresholdWpm() async {
     await supabase
         .from('preferences')
         .upsert({'user_id': supabase.auth.currentUser!.id, 'wpm': newWpm})
         .eq('user_id', supabase.auth.currentUser!.id);
+
+    FlutterForegroundTask.sendDataToTask({"threshold_wpm": newWpm});
 
     print("Updated WPM: $newWpm");
   }
@@ -140,7 +142,7 @@ class _WPEditState extends State<WPEdit> {
                 ),
                 FilledButton(
                   onPressed: () {
-                    setWpm();
+                    setThresholdWpm();
                     setState(() {
                       currentWpm = newWpm;
                     });

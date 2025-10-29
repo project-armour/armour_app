@@ -17,14 +17,16 @@ class _ContactsButtonState extends State<ContactsButton> {
 
   @override
   void initState() {
+    super.initState();
     getContacts(supabase.auth.currentUser!.id, ContactsQueryType.accepted).then(
       (value) {
-        setState(() {
-          contacts = value;
-        });
+        if (mounted && value.isNotEmpty) {
+          setState(() {
+            contacts = value;
+          });
+        }
       },
     );
-    super.initState();
   }
 
   @override

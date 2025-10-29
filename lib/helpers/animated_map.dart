@@ -7,7 +7,7 @@ class AnimateMap {
   static const _inProgressId = 'AnimatedMapController#MoveInProgress';
   static const _finishedId = 'AnimatedMapController#MoveFinished';
 
-  static void move(
+  static TickerFuture move(
     TickerProvider tickerProvider,
     MapController mapController,
     LatLng destLocation, {
@@ -71,7 +71,7 @@ class AnimateMap {
       }
     });
 
-    controller.forward();
+    return controller.forward();
   }
 
   static void rotate(
@@ -92,7 +92,7 @@ class AnimateMap {
       duration: duration,
       vsync: tickerProvider,
     );
-    
+
     // Define the animation curve
     final Animation<double> animation = CurvedAnimation(
       parent: controller,
@@ -121,7 +121,7 @@ class AnimateMap {
     });
 
     animation.addStatusListener((status) {
-      if (status == AnimationStatus.completed || 
+      if (status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
         controller.dispose();
       }
@@ -130,5 +130,3 @@ class AnimateMap {
     controller.forward();
   }
 }
-
-
