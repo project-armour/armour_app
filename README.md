@@ -1,10 +1,17 @@
+<h3 align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/296880f3-bbc2-4541-8457-1ad44c8843dc">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/4b42b915-062b-4ce5-82aa-3c06f769bada">
+  <img alt="Armour App Icon" src="https://github.com/user-attachments/assets/296880f3-bbc2-4541-8457-1ad44c8843dc" width=160>
+</picture>
+</h3>
 
+<h1 align="center"> Armour – Personal Safety App </h1>
 
-# Armour – Personal Safety App
+<p align="center">
+<i>A Flutter-powered safety companion with real-time location sharing and a connected wearable band.</i>
+</p>
 
-*A Flutter-powered safety companion with real-time location sharing and a connected wearable band.*
-
----
 
 ## 📱 Overview
 
@@ -122,4 +129,5 @@ flutter run
 ```
 
 ---
+
 
