@@ -128,6 +128,4 @@ Create `.env` → add your `STADIA_MAPS_KEY` → then run:
 flutter run
 ```
 
----
-
 
