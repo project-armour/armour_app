@@ -102,7 +102,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/300?img=5',
+                      'https://nursinginstitutegoa.org/wp-content/uploads/2016/01/tutor-8.jpg',
                     ),
                   ),
                   const SizedBox(height: 20),
