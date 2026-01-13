@@ -27,7 +27,14 @@ class _HeartRateMonitorState extends State<HeartRateMonitor> {
     });
     FlutterForegroundTask.sendDataToTask({"is_tracking_wpm": isMonitoring});
     if (isMonitoring) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Walking Pace Monitoring Started")),
+      );
       getThresholdWpm();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Walking Pace Monitoring Stopped")),
+      );
     }
   }
 
