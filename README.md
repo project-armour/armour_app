@@ -113,6 +113,7 @@ STADIA_MAPS_KEY=your_api_key_here
 * Android Studio / Xcode
 * A physical device (recommended for BLE)
 * Armour Band (for testing)
+* [Supabase](https://supabase.com) Project with appropriate schema
 
 ### Setup
 
@@ -122,10 +123,14 @@ cd armour-app
 flutter pub get
 ```
 
+Change the supabase URLs at:
+https://github.com/project-armour/armour_app/blob/286bae712aed14ce415126039c2aa320b209ca21/lib/main.dart#L40-L43
+
 Create `.env` → add your `STADIA_MAPS_KEY` → then run:
 
 ```bash
 flutter run
 ```
+
 
 
